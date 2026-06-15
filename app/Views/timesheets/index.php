@@ -1,12 +1,89 @@
 <?php require APPROOT . '/Views/inc/header.php'; ?>
 
+<style>
+    .gh-heatmap {
+        display: flex;
+        gap: 4px;
+        margin-top: 10px;
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #e6e7e9;
+    }
+    .gh-day-box {
+        flex: 1;
+        aspect-ratio: 1;
+        border-radius: 3px;
+        min-height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 600;
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+    .gh-day-box:hover {
+        transform: scale(1.05);
+    }
+    .level-0 { background-color: #ebedf0; color: #6e7681; border: 1px solid rgba(27,31,35,0.06); }
+    .level-1 { background-color: #9be9a8; color: #216e39; }
+    .level-2 { background-color: #40c463; color: #fff; }
+    .level-3 { background-color: #30a14e; color: #fff; }
+    .level-4 { background-color: #216e39; color: #fff; }
+
+    .day-label {
+        font-size: 10px;
+        color: #6e7681;
+        margin-bottom: 4px;
+        text-align: center;
+        text-transform: uppercase;
+    }
+</style>
+
 <div class="page-header d-print-none">
     <div class="container-xl">
         <div class="row g-2 align-items-center">
             <div class="col">
                 <h2 class="page-title">Mon Timesheet</h2>
                 <div class="text-muted mt-1">
-                    Semaine du <?= $data['monday']->format('d/m/Y') ?> au <?= $data['saturday']->format('d/m/Y') ?> (Dimanche inclus pour info)
+                    Semaine du <?= $data['monday']->format('d/m/Y') ?> au <?= $data['saturday']->format('d/m/Y') ?>
+                </div>
+                
+                <!-- GitHub Style Weekly Heatmap -->
+                <div class="gh-heatmap mt-3">
+                    <?php 
+                    $days_short = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+                    for ($i = 0; $i < 7; $i++): 
+                        $current_date = clone $data['monday'];
+                        $current_date->modify("+$i days");
+                        $date_str = $current_date->format('Y-m-d');
+                        
+                        $day_entries = array_filter($data['entries'], function($e) use ($date_str) {
+                            return $e->date == $date_str;
+                        });
+                        
+                        $total_seconds = 0;
+                        foreach($day_entries as $e) {
+                            $total_seconds += strtotime($e->end_time) - strtotime($e->start_time);
+                        }
+                        $total_hours = $total_seconds / 3600;
+                        
+                        $level = 0;
+                        if ($total_hours > 0) $level = 1;
+                        if ($total_hours >= 4) $level = 2;
+                        if ($total_hours >= 7.5) $level = 3;
+                        if ($total_hours >= 9) $level = 4;
+                    ?>
+                    <div class="flex-grow-1">
+                        <div class="day-label"><?= $days_short[$i] ?></div>
+                        <div class="gh-day-box level-<?= $level ?>" 
+                             title="<?= number_format($total_hours, 1) ?>h travaillées"
+                             data-bs-toggle="tooltip">
+                             <?= $total_hours > 0 ? number_format($total_hours, 1) . 'h' : '' ?>
+                        </div>
+                    </div>
+                    <?php endfor; ?>
                 </div>
             </div>
             <div class="col-auto ms-auto">
@@ -17,10 +94,6 @@
                             Validations en attente
                         </a>
                     <?php endif; ?>
-                    <a href="<?= URLROOT ?>/timesheets/heatmap" class="btn btn-outline-success">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><rect x="4" y="4" width="16" height="16" rx="2" /><line x1="8" y1="4" x2="8" y2="20" /><line x1="12" y1="4" x2="12" y2="20" /><line x1="16" y1="4" x2="16" y2="20" /><line x1="4" y1="8" x2="20" y2="8" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="16" x2="20" y2="16" /></svg>
-                        Vue Semestrielle
-                    </a>
                     <a href="?week=<?= $data['week_offset'] - 1 ?>" class="btn btn-icon" title="Semaine précédente">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="15 6 9 12 15 18" /></svg>
                     </a>
