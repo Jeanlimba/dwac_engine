@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS ged_external_links (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    folder_id INT NOT NULL,
+    token VARCHAR(100) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (folder_id) REFERENCES ged_folders(id) ON DELETE CASCADE
+);
