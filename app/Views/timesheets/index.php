@@ -1,73 +1,104 @@
-<?php require APPROOT . '/Views/inc/header.php'; ?>
+<?php 
+require APPROOT . '/Views/inc/header.php'; 
+
+$months_fr = [
+    'January' => 'Janvier', 'February' => 'Février', 'March' => 'Mars', 'April' => 'Avril',
+    'May' => 'Mai', 'June' => 'Juin', 'July' => 'Juillet', 'August' => 'Août',
+    'September' => 'Septembre', 'October' => 'Octobre', 'November' => 'Novembre', 'December' => 'Décembre'
+];
+$days_fr = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+?>
 
 <style>
     .gh-container {
         background: #fff;
         border: 1px solid #d0d7de;
-        border-radius: 6px;
-        padding: 16px;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    /* Month Grid: 7 columns (Mon-Sun) */
+    /* Month Grid with Separators */
     .gh-month-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 8px;
-        max-width: 450px;
+        max-width: 480px;
         margin: 0 auto;
+        position: relative;
     }
     
-    /* Week Grid: 7 large boxes */
+    /* Subtle vertical lines between columns */
+    .gh-month-grid::before {
+        content: "";
+        position: absolute;
+        top: 0; bottom: 0; left: 0; right: 0;
+        background-image: linear-gradient(to right, #f3f4f6 1px, transparent 1px);
+        background-size: calc(100% / 7) 100%;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
     .gh-week-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 12px;
+        gap: 15px;
     }
 
     .gh-box {
         aspect-ratio: 1;
-        border-radius: 4px;
+        border-radius: 6px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.2s;
-        border: 1px solid rgba(27,31,35,0.06);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(0,0,0,0.05);
         position: relative;
+        z-index: 1;
     }
     
     .gh-box:hover {
-        transform: scale(1.05);
-        filter: brightness(0.95);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        z-index: 2;
     }
 
-    .gh-box.selected {
-        outline: 2px solid #0969da;
-        outline-offset: 2px;
-    }
+    /* Vibrant Colors with White Text */
+    .bg-red { background-color: #d73a49; color: #fff; } /* GitHub Red */
+    .bg-orange { background-color: #f66a0a; color: #fff; } /* GitHub Orange */
+    .bg-green { background-color: #28a745; color: #fff; } /* GitHub Green */
+    .bg-weekend { background-color: #f6f8fa; color: #57606a; border: 1px dashed #d0d7de; }
 
-    /* Colors: Red (0h), Orange (<8h), Green (>=8h) */
-    .bg-red { background-color: #ffeff0; color: #cf222e; }
-    .bg-orange { background-color: #fff8eb; color: #9a6700; }
-    .bg-green { background-color: #dafbe1; color: #1a7f37; }
-
-    .box-label { font-size: 10px; font-weight: bold; margin-bottom: 2px; }
-    .box-hours { font-size: 12px; font-weight: 800; }
+    .box-label { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
+    .box-hours { font-size: 13px; font-weight: 900; }
     
     .grid-header {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 8px;
-        margin-bottom: 8px;
+        margin-bottom: 15px;
         text-align: center;
-        font-size: 11px;
-        color: #57606a;
-        font-weight: 600;
-        max-width: 450px;
+        max-width: 480px;
         margin-left: auto;
         margin-right: auto;
+    }
+    
+    .day-header-label {
+        background: #f1f5f9;
+        color: #475569;
+        padding: 4px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .page-title-fr {
+        font-weight: 800;
+        color: #1e293b;
     }
 </style>
 
@@ -75,13 +106,13 @@
     <div class="container-xl">
         <div class="row g-2 align-items-center">
             <div class="col">
-                <h2 class="page-title">
+                <h2 class="page-title page-title-fr">
                     <?php if($data['view'] == 'day'): ?>
                         Détails du <?= date('d/m/Y', strtotime($data['selected_date'])) ?>
                     <?php elseif($data['view'] == 'week'): ?>
-                        Semaine <?= $data['start_date']->format('W') ?> (<?= $data['start_date']->format('M Y') ?>)
+                        Semaine <?= $data['start_date']->format('W') ?> (<?= $months_fr[$data['start_date']->format('F')] ?>)
                     <?php else: ?>
-                        <?= $data['start_date']->format('F Y') ?>
+                        <?= $months_fr[$data['start_date']->format('F')] ?> <?= $data['start_date']->format('Y') ?>
                     <?php endif; ?>
                 </h2>
             </div>
@@ -115,7 +146,9 @@
         <?php if($data['view'] == 'month'): ?>
             <div class="gh-container">
                 <div class="grid-header">
-                    <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+                    <?php foreach($days_fr as $day): ?>
+                        <div class="day-header-label"><?= $day ?></div>
+                    <?php endforeach; ?>
                 </div>
                 <div class="gh-month-grid">
                     <?php 
@@ -130,7 +163,7 @@
                         $total_hours = array_reduce($day_entries, function($c, $e) { return $c + (strtotime($e->end_time) - strtotime($e->start_time)) / 3600; }, 0);
                         
                         if ($dayOfWeek >= 6) {
-                            $color = 'bg-light text-muted';
+                            $color = 'bg-weekend';
                         } else {
                             $color = $total_hours >= 8 ? 'bg-green' : ($total_hours > 0 ? 'bg-orange' : 'bg-red');
                         }
@@ -143,7 +176,7 @@
                         </div>
                     <?php $current->modify('+1 day'); endwhile; ?>
                 </div>
-                <div class="text-center mt-3 text-muted small">Double-cliquez sur un jour pour ouvrir la semaine.</div>
+                <div class="text-center mt-4 text-muted small">Double-cliquez sur un jour pour ouvrir la vue hebdomadaire.</div>
             </div>
 
         <?php elseif($data['view'] == 'week'): ?>
@@ -151,7 +184,6 @@
                 <div class="gh-week-grid">
                     <?php 
                     $current = clone $data['start_date'];
-                    $days_fr = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
                     for($i=0; $i<7; $i++): 
                         $date_str = $current->format('Y-m-d');
                         $dayOfWeek = (int)$current->format('N');
@@ -159,7 +191,7 @@
                         $total_hours = array_reduce($day_entries, function($c, $e) { return $c + (strtotime($e->end_time) - strtotime($e->start_time)) / 3600; }, 0);
                         
                         if ($dayOfWeek >= 6) {
-                            $color = 'bg-light text-muted';
+                            $color = 'bg-weekend';
                         } else {
                             $color = $total_hours >= 8 ? 'bg-green' : ($total_hours > 0 ? 'bg-orange' : 'bg-red');
                         }
@@ -168,11 +200,11 @@
                              onclick="window.location.href='?view=day&date=<?= $date_str ?>'">
                              <span class="box-label"><?= $days_fr[$i] ?></span>
                              <span class="box-hours"><?= number_format($total_hours, 1) ?>h</span>
-                             <span class="small opacity-50"><?= $current->format('d/m') ?></span>
+                             <span class="small opacity-75"><?= $current->format('d/m') ?></span>
                         </div>
                     <?php $current->modify('+1 day'); endfor; ?>
                 </div>
-                <div class="text-center mt-3 text-muted small">Cliquez sur un jour pour gérer les détails.</div>
+                <div class="text-center mt-4 text-muted small">Cliquez sur un jour pour gérer les activités détaillées.</div>
             </div>
 
         <?php elseif($data['view'] == 'day'): ?>
