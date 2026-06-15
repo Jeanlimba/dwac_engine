@@ -20,31 +20,40 @@ class Timesheets extends Controller {
             die("Accès réservé aux employés");
         }
 
-        $week_offset = isset($_GET['week']) ? (int)$_GET['week'] : 0;
-        
+        $view = $_GET['view'] ?? 'week';
+        $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+        $selected_date = $_GET['date'] ?? date('Y-m-d');
+
         $monday = new DateTime();
-        $monday->setISODate((int)$monday->format('o'), (int)$monday->format('W') + $week_offset);
-        $monday->setTime(0, 0);
+        $monday->setISODate((int)$monday->format('o'), (int)$monday->format('W') + ($view == 'week' ? $offset : 0));
         
-        $saturday = clone $monday;
-        $saturday->modify('+5 days');
-        $saturday->setTime(23, 59, 59);
+        if ($view == 'month') {
+            $start_date = new DateTime('first day of this month');
+            if ($offset != 0) $start_date->modify("$offset months");
+            $end_date = clone $start_date;
+            $end_date->modify('last day of this month');
+        } else {
+            $start_date = clone $monday;
+            $end_date = clone $monday;
+            $end_date->modify('+6 days');
+        }
 
-        // We still fetch until Sunday for overtime detection if any work was done on Sunday
-        $sunday = clone $monday;
-        $sunday->modify('+6 days');
-        $sunday->setTime(23, 59, 59);
-
-        $entries = $this->timesheetModel->getByEmployeeAndWeek($_SESSION['employee_id'], $monday->format('Y-m-d'), $sunday->format('Y-m-d'));
+        // Fetch entries for the range
+        $entries = $this->timesheetModel->getByEmployeeAndWeek(
+            $_SESSION['employee_id'], 
+            $start_date->format('Y-m-d'), 
+            $end_date->format('Y-m-d')
+        );
         
         $missions = $this->missionModel->getMissionsByTenant($_SESSION['tenant_id']);
 
         $data = [
             'title' => 'Mon Timesheet',
-            'monday' => $monday,
-            'saturday' => $saturday,
-            'sunday' => $sunday,
-            'week_offset' => $week_offset,
+            'view' => $view,
+            'offset' => $offset,
+            'selected_date' => $selected_date,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
             'entries' => $entries,
             'missions' => $missions
         ];
