@@ -52,6 +52,38 @@ class Timesheets extends Controller {
         $this->view('timesheets/index', $data);
     }
 
+    public function heatmap() {
+        if (!isset($_SESSION['employee_id'])) {
+            die("Accès réservé aux employés");
+        }
+
+        // 6 months ago to today
+        $end_date = new DateTime();
+        $start_date = clone $end_date;
+        $start_date->modify('-6 months');
+        $start_date->modify('first day of this month');
+
+        $entries = $this->timesheetModel->getByEmployeeAndWeek($_SESSION['employee_id'], $start_date->format('Y-m-d'), $end_date->format('Y-m-d'));
+        
+        // Group by date for heatmap
+        $daily_stats = [];
+        foreach($entries as $e) {
+            if (!isset($daily_stats[$e->date])) {
+                $daily_stats[$e->date] = 0;
+            }
+            $daily_stats[$e->date] += (strtotime($e->end_time) - strtotime($e->start_time)) / 3600;
+        }
+
+        $data = [
+            'title' => 'Vue Semestrielle (Heatmap)',
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+            'daily_stats' => $daily_stats
+        ];
+
+        $this->view('timesheets/heatmap', $data);
+    }
+
     public function save() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             header('Content-Type: application/json');
