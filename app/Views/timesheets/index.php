@@ -125,9 +125,15 @@
 
                     while($current <= $data['end_date']): 
                         $date_str = $current->format('Y-m-d');
+                        $dayOfWeek = (int)$current->format('N');
                         $day_entries = array_filter($data['entries'], function($e) use ($date_str) { return $e->date == $date_str; });
                         $total_hours = array_reduce($day_entries, function($c, $e) { return $c + (strtotime($e->end_time) - strtotime($e->start_time)) / 3600; }, 0);
-                        $color = $total_hours >= 8 ? 'bg-green' : ($total_hours > 0 ? 'bg-orange' : 'bg-red');
+                        
+                        if ($dayOfWeek >= 6) {
+                            $color = 'bg-light text-muted';
+                        } else {
+                            $color = $total_hours >= 8 ? 'bg-green' : ($total_hours > 0 ? 'bg-orange' : 'bg-red');
+                        }
                     ?>
                         <div class="gh-box <?= $color ?>" 
                              title="<?= $current->format('d/m') ?>: <?= number_format($total_hours, 1) ?>h"
@@ -148,9 +154,15 @@
                     $days_fr = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
                     for($i=0; $i<7; $i++): 
                         $date_str = $current->format('Y-m-d');
+                        $dayOfWeek = (int)$current->format('N');
                         $day_entries = array_filter($data['entries'], function($e) use ($date_str) { return $e->date == $date_str; });
                         $total_hours = array_reduce($day_entries, function($c, $e) { return $c + (strtotime($e->end_time) - strtotime($e->start_time)) / 3600; }, 0);
-                        $color = $total_hours >= 8 ? 'bg-green' : ($total_hours > 0 ? 'bg-orange' : 'bg-red');
+                        
+                        if ($dayOfWeek >= 6) {
+                            $color = 'bg-light text-muted';
+                        } else {
+                            $color = $total_hours >= 8 ? 'bg-green' : ($total_hours > 0 ? 'bg-orange' : 'bg-red');
+                        }
                     ?>
                         <div class="gh-box <?= $color ?> py-4" 
                              onclick="window.location.href='?view=day&date=<?= $date_str ?>'">
