@@ -1,54 +1,73 @@
 <?php require APPROOT . '/Views/inc/header.php'; ?>
 
 <style>
-    .gh-heatmap {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 3px;
-        background: #f8f9fa;
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid #e6e7e9;
-    }
-    .gh-day-box {
-        width: 32px;
-        height: 32px;
-        border-radius: 3px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        font-weight: 600;
-        transition: transform 0.2s, box-shadow 0.2s;
-        cursor: pointer;
-        position: relative;
-    }
-    .gh-day-box:hover {
-        transform: scale(1.1);
-        z-index: 10;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .gh-day-box.selected {
-        border: 2px solid #000 !important;
-        transform: scale(1.1);
+    .gh-container {
+        background: #fff;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        padding: 16px;
     }
     
-    /* Red-Orange-Green Scale */
-    .level-empty { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } /* Red (0h) */
-    .level-partial { background-color: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; } /* Orange (<8h) */
-    .level-full { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; } /* Green (>=8h) */
-
-    .day-label {
-        font-size: 9px;
-        color: #6e7681;
-        margin-bottom: 2px;
-        text-align: center;
-        text-transform: uppercase;
-        width: 32px;
+    /* Month Grid: 7 columns (Mon-Sun) */
+    .gh-month-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        max-width: 450px;
+        margin: 0 auto;
     }
-    .view-switcher .btn.active {
-        background-color: #206bc4;
-        color: #fff;
+    
+    /* Week Grid: 7 large boxes */
+    .gh-week-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 12px;
+    }
+
+    .gh-box {
+        aspect-ratio: 1;
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid rgba(27,31,35,0.06);
+        position: relative;
+    }
+    
+    .gh-box:hover {
+        transform: scale(1.05);
+        filter: brightness(0.95);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .gh-box.selected {
+        outline: 2px solid #0969da;
+        outline-offset: 2px;
+    }
+
+    /* Colors: Red (0h), Orange (<8h), Green (>=8h) */
+    .bg-red { background-color: #ffeff0; color: #cf222e; }
+    .bg-orange { background-color: #fff8eb; color: #9a6700; }
+    .bg-green { background-color: #dafbe1; color: #1a7f37; }
+
+    .box-label { font-size: 10px; font-weight: bold; margin-bottom: 2px; }
+    .box-hours { font-size: 12px; font-weight: 800; }
+    
+    .grid-header {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        margin-bottom: 8px;
+        text-align: center;
+        font-size: 11px;
+        color: #57606a;
+        font-weight: 600;
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
     }
 </style>
 
@@ -56,154 +75,148 @@
     <div class="container-xl">
         <div class="row g-2 align-items-center">
             <div class="col">
-                <h2 class="page-title">Mon Timesheet</h2>
-                <div class="text-muted mt-1">
-                    <?php if($data['view'] == 'month'): ?>
-                        Mois de <?= $data['start_date']->format('F Y') ?>
+                <h2 class="page-title">
+                    <?php if($data['view'] == 'day'): ?>
+                        Détails du <?= date('d/m/Y', strtotime($data['selected_date'])) ?>
+                    <?php elseif($data['view'] == 'week'): ?>
+                        Semaine <?= $data['start_date']->format('W') ?> (<?= $data['start_date']->format('M Y') ?>)
                     <?php else: ?>
-                        Semaine du <?= $data['start_date']->format('d/m') ?> au <?= $data['end_date']->format('d/m') ?>
+                        <?= $data['start_date']->format('F Y') ?>
                     <?php endif; ?>
-                </div>
+                </h2>
             </div>
-            
             <div class="col-auto ms-auto">
                 <div class="btn-list">
-                    <div class="btn-group view-switcher">
-                        <a href="?view=day&date=<?= $data['selected_date'] ?>" class="btn btn-sm <?= $data['view'] == 'day' ? 'active' : '' ?>">Jour</a>
-                        <a href="?view=week&offset=<?= $data['offset'] ?>" class="btn btn-sm <?= $data['view'] == 'week' ? 'active' : '' ?>">Semaine</a>
-                        <a href="?view=month&offset=<?= $data['offset'] ?>" class="btn btn-sm <?= $data['view'] == 'month' ? 'active' : '' ?>">Mois</a>
-                    </div>
+                    <?php if($data['view'] != 'month'): ?>
+                        <a href="?view=<?= $data['view'] == 'day' ? 'week' : 'month' ?>&offset=<?= $data['offset'] ?>&date=<?= $data['selected_date'] ?>" class="btn btn-outline-secondary btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 11l-4 4l4 4m-4 -4h11a4 4 0 0 0 0 -8h-1" /></svg>
+                            Retour
+                        </a>
+                    <?php endif; ?>
                     
                     <div class="btn-group">
-                        <a href="?view=<?= $data['view'] ?>&offset=<?= $data['offset'] - 1 ?>" class="btn btn-outline-primary btn-sm btn-icon">
+                        <a href="?view=<?= $data['view'] ?>&offset=<?= $data['offset'] - 1 ?>&date=<?= $data['selected_date'] ?>" class="btn btn-outline-primary btn-sm btn-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="15 6 9 12 15 18" /></svg>
                         </a>
-                        <a href="?view=<?= $data['view'] ?>&offset=0" class="btn btn-sm <?= $data['offset'] == 0 ? 'btn-primary' : 'btn-outline-primary' ?>">Aujourd'hui</a>
-                        <a href="?view=<?= $data['view'] ?>&offset=<?= $data['offset'] + 1 ?>" class="btn btn-outline-primary btn-sm btn-icon">
+                        <a href="?view=<?= $data['view'] ?>&offset=0" class="btn btn-sm btn-outline-primary">Aujourd'hui</a>
+                        <a href="?view=<?= $data['view'] ?>&offset=<?= $data['offset'] + 1 ?>&date=<?= $data['selected_date'] ?>" class="btn btn-outline-primary btn-sm btn-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="9 6 15 12 9 18" /></svg>
                         </a>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Heatmap Section -->
-        <?php if($data['view'] != 'day'): ?>
-        <div class="gh-heatmap mt-3">
-            <?php 
-            $current = clone $data['start_date'];
-            while($current <= $data['end_date']): 
-                $date_str = $current->format('Y-m-d');
-                $day_entries = array_filter($data['entries'], function($e) use ($date_str) {
-                    return $e->date == $date_str;
-                });
-                
-                $total_seconds = 0;
-                foreach($day_entries as $e) {
-                    $total_seconds += strtotime($e->end_time) - strtotime($e->start_time);
-                }
-                $total_hours = $total_seconds / 3600;
-                
-                $level = 'empty';
-                if ($total_hours >= 8) $level = 'full';
-                elseif ($total_hours > 0) $level = 'partial';
-                
-                $isSelected = ($date_str == $data['selected_date']);
-            ?>
-            <div class="text-center">
-                <div class="day-label"><?= $current->format('D d') ?></div>
-                <div class="gh-day-box level-<?= $level ?> <?= $isSelected ? 'selected' : '' ?>" 
-                     onclick="window.location.href='?view=day&date=<?= $date_str ?>'"
-                     title="<?= number_format($total_hours, 1) ?>h déclarées"
-                     data-bs-toggle="tooltip">
-                     <?= $total_hours > 0 ? number_format($total_hours, 1) . 'h' : '' ?>
-                </div>
-            </div>
-            <?php $current->modify('+1 day'); endwhile; ?>
-        </div>
-        <?php endif; ?>
     </div>
 </div>
 
 <div class="page-body">
     <div class="container-xl">
-        <?php 
-        $sel_date = $data['selected_date'];
-        $sel_entries = array_filter($data['entries'], function($e) use ($sel_date) {
-            return $e->date == $sel_date;
-        });
-        ?>
         
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Détails du <?= date('d/m/Y', strtotime($sel_date)) ?></h3>
-                <div class="card-actions">
-                    <button onclick="addEntry('<?= $sel_date ?>')" class="btn btn-primary btn-sm">
-                        + Ajouter une tâche
-                    </button>
+        <?php if($data['view'] == 'month'): ?>
+            <div class="gh-container">
+                <div class="grid-header">
+                    <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+                </div>
+                <div class="gh-month-grid">
+                    <?php 
+                    $current = clone $data['start_date'];
+                    $firstDay = (int)$current->format('N');
+                    for($i = 1; $i < $firstDay; $i++) echo '<div></div>'; // Offset
+
+                    while($current <= $data['end_date']): 
+                        $date_str = $current->format('Y-m-d');
+                        $day_entries = array_filter($data['entries'], function($e) use ($date_str) { return $e->date == $date_str; });
+                        $total_hours = array_reduce($day_entries, function($c, $e) { return $c + (strtotime($e->end_time) - strtotime($e->start_time)) / 3600; }, 0);
+                        $color = $total_hours >= 8 ? 'bg-green' : ($total_hours > 0 ? 'bg-orange' : 'bg-red');
+                    ?>
+                        <div class="gh-box <?= $color ?>" 
+                             title="<?= $current->format('d/m') ?>: <?= number_format($total_hours, 1) ?>h"
+                             ondblclick="window.location.href='?view=week&date=<?= $date_str ?>'"
+                             data-bs-toggle="tooltip">
+                             <span class="box-label"><?= $current->format('d') ?></span>
+                        </div>
+                    <?php $current->modify('+1 day'); endwhile; ?>
+                </div>
+                <div class="text-center mt-3 text-muted small">Double-cliquez sur un jour pour ouvrir la semaine.</div>
+            </div>
+
+        <?php elseif($data['view'] == 'week'): ?>
+            <div class="gh-container">
+                <div class="gh-week-grid">
+                    <?php 
+                    $current = clone $data['start_date'];
+                    $days_fr = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+                    for($i=0; $i<7; $i++): 
+                        $date_str = $current->format('Y-m-d');
+                        $day_entries = array_filter($data['entries'], function($e) use ($date_str) { return $e->date == $date_str; });
+                        $total_hours = array_reduce($day_entries, function($c, $e) { return $c + (strtotime($e->end_time) - strtotime($e->start_time)) / 3600; }, 0);
+                        $color = $total_hours >= 8 ? 'bg-green' : ($total_hours > 0 ? 'bg-orange' : 'bg-red');
+                    ?>
+                        <div class="gh-box <?= $color ?> py-4" 
+                             onclick="window.location.href='?view=day&date=<?= $date_str ?>'">
+                             <span class="box-label"><?= $days_fr[$i] ?></span>
+                             <span class="box-hours"><?= number_format($total_hours, 1) ?>h</span>
+                             <span class="small opacity-50"><?= $current->format('d/m') ?></span>
+                        </div>
+                    <?php $current->modify('+1 day'); endfor; ?>
+                </div>
+                <div class="text-center mt-3 text-muted small">Cliquez sur un jour pour gérer les détails.</div>
+            </div>
+
+        <?php elseif($data['view'] == 'day'): ?>
+            <?php 
+            $sel_date = $data['selected_date'];
+            $sel_entries = array_filter($data['entries'], function($e) use ($sel_date) { return $e->date == $sel_date; });
+            ?>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Activités déclarées</h3>
+                    <div class="card-actions">
+                        <button onclick="addEntry('<?= $sel_date ?>')" class="btn btn-primary btn-sm">
+                            + Ajouter une tâche
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
+                            <tr>
+                                <th>Heures</th>
+                                <th>Catégorie</th>
+                                <th>Description</th>
+                                <th>Statut</th>
+                                <th class="w-1"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($sel_entries)): ?>
+                                <tr><td colspan="5" class="text-center py-4 text-muted">Aucune activité ce jour.</td></tr>
+                            <?php else: ?>
+                                <?php foreach($sel_entries as $entry): ?>
+                                    <tr>
+                                        <td><span class="badge bg-blue-lt"><?= substr($entry->start_time, 0, 5) ?> - <?= substr($entry->end_time, 0, 5) ?></span></td>
+                                        <td><strong><?= htmlspecialchars($entry->category) ?></strong></td>
+                                        <td class="small"><?= htmlspecialchars($entry->task_description) ?></td>
+                                        <td>
+                                            <?php if ($entry->status == 'valide'): ?><span class="badge bg-success">Valide</span>
+                                            <?php elseif ($entry->status == 'rejete'): ?><span class="badge bg-danger">Rejeté</span>
+                                            <?php else: ?><span class="badge bg-warning">Attente</span><?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <div class="btn-list flex-nowrap">
+                                                <button onclick='editEntry(<?= json_encode($entry) ?>)' class="btn btn-icon btn-sm"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" /><path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" /><line x1="16" y1="5" x2="19" y2="8" /></svg></button>
+                                                <button onclick="deleteEntry(<?= $entry->id ?>)" class="btn btn-icon btn-sm text-danger"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="4" y1="7" x2="20" y2="7" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-vcenter card-table">
-                    <thead>
-                        <tr>
-                            <th>Heures</th>
-                            <th>Catégorie / Mission</th>
-                            <th>Description</th>
-                            <th>Statut</th>
-                            <th class="w-1"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($sel_entries)): ?>
-                            <tr>
-                                <td colspan="5" class="text-center text-muted py-4">
-                                    Aucune activité pour ce jour.
-                                </td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach($sel_entries as $entry): ?>
-                                <tr>
-                                    <td class="text-nowrap">
-                                        <span class="badge bg-blue-lt">
-                                            <?= substr($entry->start_time, 0, 5) ?> - <?= substr($entry->end_time, 0, 5) ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="fw-bold"><?= htmlspecialchars($entry->category) ?></div>
-                                        <?php if ($entry->category == 'Mission'): ?>
-                                            <div class="text-muted small"><?= htmlspecialchars($entry->mission_title ?? $entry->custom_mission_name) ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-muted small"><?= htmlspecialchars($entry->task_description) ?></td>
-                                    <td>
-                                        <?php if ($entry->status == 'valide'): ?>
-                                            <span class="badge bg-success">Valide</span>
-                                        <?php elseif ($entry->status == 'rejete'): ?>
-                                            <span class="badge bg-danger">Rejeté</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-warning">En attente</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <div class="btn-list flex-nowrap">
-                                            <?php if ($entry->status != 'valide'): ?>
-                                                <button onclick='editEntry(<?= json_encode($entry) ?>)' class="btn btn-icon btn-sm" title="Modifier">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" /><path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" /><line x1="16" y1="5" x2="19" y2="8" /></svg>
-                                                </button>
-                                                <button onclick="deleteEntry(<?= $entry->id ?>)" class="btn btn-icon btn-sm text-danger" title="Supprimer">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="4" y1="7" x2="20" y2="7" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
-                                                </button>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <?php endif; ?>
+
     </div>
 </div>
 
@@ -304,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.toggleMissionFields = function() {
         const category = document.getElementById('entry-category').value;
         const fields = document.getElementById('mission-fields');
-        fields.style.display = (category === 'Mission') ? 'block' : 'none';
+        if (fields) fields.style.display = (category === 'Mission') ? 'block' : 'none';
     };
 
     entryForm.onsubmit = function(e) {
