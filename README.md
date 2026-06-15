@@ -66,18 +66,6 @@ nom-projet/
 3. Placez le dossier dans votre serveur web (XAMPP/WAMP/LAMP) ou utilisez le serveur intégré PHP.
 4. Accédez à [index.php](index.php). -->
 
-## Comptes par défaut
-
-- **Super‑admin** :
-  - username: `super_admin`
-  - password: `password123`
-
-- **Admin tenant** :
-  - créé automatiquement lors de la création d’un tenant (username = `admin_{nom_du_tenant}`)
-  - password: `password123`
-
-> ⚠️ Les mots de passe sont stockés crypté À sécuriser pour la mise en production.
-
 ## Remarques importantes
 
 - Les fichiers uploadés sont stockés dans [uploads/](uploads/). Assurez‑vous que le dossier est accessible en écriture.

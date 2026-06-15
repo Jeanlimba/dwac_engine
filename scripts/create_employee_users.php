@@ -14,7 +14,7 @@ try {
     $employees = $stmt->fetchAll();
 
     $count = 0;
-    $default_password = password_hash('password123', PASSWORD_DEFAULT);
+    $default_password = password_hash(defined('DEFAULT_PASSWORD') ? DEFAULT_PASSWORD : 'password123', PASSWORD_DEFAULT);
 
     foreach ($employees as $emp) {
         $username = generate_unique_username($pdo, $emp['prenom'], $emp['nom'], $emp['acronym'], $emp['tenant_id']);

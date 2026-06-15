@@ -39,6 +39,9 @@ if ($is_local) {
     if (!defined('DB_PASS')) define('DB_PASS', defined('ONLINE_DB_PASS') ? ONLINE_DB_PASS : '');
 }
 
+// Default user password for new accounts
+if (!defined('DEFAULT_PASSWORD')) define('DEFAULT_PASSWORD', 'password123');
+
 // Compatibilité DB_PASSWORD
 if (!defined('DB_PASSWORD')) define('DB_PASSWORD', DB_PASS);
 

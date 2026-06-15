@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $acronym = $tenant ? $tenant['acronym'] : 'EVO';
 
             $username = generate_unique_username($pdo, $data['prenom'], $data['nom'], $acronym, $tenant_id);
-            $default_password = password_hash('password123', PASSWORD_DEFAULT);
+            $default_password = password_hash(defined('DEFAULT_PASSWORD') ? DEFAULT_PASSWORD : 'password123', PASSWORD_DEFAULT);
 
             $stmt_user = $pdo->prepare("INSERT INTO users (tenant_id, employee_id, username, password, is_super_admin) 
                                        VALUES (:tenant_id, :employee_id, :username, :password, 0)");

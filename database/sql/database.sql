@@ -21,9 +21,9 @@ CREATE TABLE users (
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
 
--- Default super admin
+-- Default super admin (password: password123)
 INSERT INTO `users` (`id`, `tenant_id`, `username`, `password`, `is_super_admin`, `created_at`) VALUES
-(1, NULL, 'super_admin', 'password123', 1, '2024-07-25 10:00:00');
+(1, NULL, 'super_admin', '$2y$10$NO404RzGu67NIUHGbnW6W.87wAYRpEc/aoQ6sza7j.9gVxfB/GsIe', 1, '2024-07-25 10:00:00');
 
 
 ALTER TABLE users                                                                                                                            

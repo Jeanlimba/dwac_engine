@@ -199,7 +199,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-label text-muted small">Mot de passe</div>
-                                        <div class="text-muted small"><em>Par défaut (password123)</em></div>
+                                        <div class="text-muted small"><em>Par défaut (<?= defined('DEFAULT_PASSWORD') ? DEFAULT_PASSWORD : 'password123' ?>)</em></div>
                                     </div>
                                     <div class="col-md-4 mt-3">
                                         <div class="form-label text-muted small">Rôle Système</div>
