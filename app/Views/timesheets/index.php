@@ -76,11 +76,16 @@
                         if ($total_hours >= 9) $level = 4;
                     ?>
                     <div class="flex-grow-1">
-                        <div class="day-label"><?= $days_short[$i] ?></div>
+                        <div class="day-label"><?= $days_short[$i] ?> <?= $current_date->format('d/m') ?></div>
                         <div class="gh-day-box level-<?= $level ?>" 
-                             title="<?= number_format($total_hours, 1) ?>h travaillées"
+                             onclick="addEntry('<?= $date_str ?>')"
+                             title="Cliquez pour ajouter une tâche (<?= number_format($total_hours, 1) ?>h déjà faites)"
                              data-bs-toggle="tooltip">
-                             <?= $total_hours > 0 ? number_format($total_hours, 1) . 'h' : '' ?>
+                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+                               <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                               <path d="M12 5l0 14"></path>
+                               <path d="M5 12l14 0"></path>
+                             </svg>
                         </div>
                     </div>
                     <?php endfor; ?>
@@ -91,14 +96,14 @@
                     <?php if ($_SESSION['user_role'] === 'superviseur' || $_SESSION['user_role'] === 'manager'): ?>
                         <a href="<?= URLROOT ?>/timesheets/pending" class="btn btn-warning">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2z" /><polyline points="9 11 12 14 20 6" /><path d="M3 7v10a2 2 0 0 0 2 2h2" /></svg>
-                            Validations en attente
+                            Validations
                         </a>
                     <?php endif; ?>
-                    <a href="?week=<?= $data['week_offset'] - 1 ?>" class="btn btn-icon" title="Semaine précédente">
+                    <a href="?week=<?= $data['week_offset'] - 1 ?>" class="btn btn-icon" title="Précédent">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="15 6 9 12 15 18" /></svg>
                     </a>
                     <a href="<?= URLROOT ?>/timesheets" class="btn <?= $data['week_offset'] == 0 ? 'btn-primary' : '' ?>">Cette semaine</a>
-                    <a href="?week=<?= $data['week_offset'] + 1 ?>" class="btn btn-icon" title="Semaine suivante">
+                    <a href="?week=<?= $data['week_offset'] + 1 ?>" class="btn btn-icon" title="Suivant">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="9 6 15 12 9 18" /></svg>
                     </a>
                 </div>
@@ -109,89 +114,72 @@
 
 <div class="page-body">
     <div class="container-xl">
-        <div class="row row-cards">
-            <?php 
-            $days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-            for ($i = 0; $i < 7; $i++): 
-                $current_date = clone $data['monday'];
-                $current_date->modify("+$i days");
-                $date_str = $current_date->format('Y-m-d');
-                
-                $day_entries = array_filter($data['entries'], function($e) use ($date_str) {
-                    return $e->date == $date_str;
-                });
-                
-                $total_seconds = 0;
-                foreach($day_entries as $e) {
-                    $total_seconds += strtotime($e->end_time) - strtotime($e->start_time);
-                }
-                $total_hours = $total_seconds / 3600;
-                $progress = min(100, ($total_hours / 8) * 100);
-                $progress_class = $total_hours >= 8 ? 'bg-success' : ($total_hours > 0 ? 'bg-primary' : 'bg-gray-300');
-            ?>
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h3 class="card-title"><?= $days[$i] ?> <?= $current_date->format('d/m') ?></h3>
-                            <div class="text-muted small"><?= number_format($total_hours, 1) ?> / 8h déclarées</div>
-                        </div>
-                        <div class="card-actions">
-                            <button onclick="addEntry('<?= $date_str ?>')" class="btn btn-sm btn-outline-primary">
-                                + Ajouter une tâche
-                            </button>
-                        </div>
-                    </div>
-                    <div class="progress progress-sm card-progress">
-                        <div class="progress-bar <?= $progress_class ?>" style="width: <?= $progress ?>%" role="progressbar" aria-valuenow="<?= $progress ?>" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    <?php if (!empty($day_entries)): ?>
-                    <div class="list-group list-group-flush list-group-hoverable">
-                        <?php foreach($day_entries as $entry): ?>
-                        <div class="list-group-item">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <span class="badge bg-blue-lt"><?= substr($entry->start_time, 0, 5) ?> - <?= substr($entry->end_time, 0, 5) ?></span>
-                                </div>
-                                <div class="col">
-                                    <div class="fw-bold">
-                                        <?= htmlspecialchars($entry->category) ?>
-                                        <?php if ($entry->category == 'Mission'): ?>
-                                            : <?= htmlspecialchars($entry->mission_title ?? $entry->custom_mission_name) ?>
-                                        <?php endif; ?>
-                                        <?php if ($entry->status == 'valide'): ?>
-                                            <span class="badge bg-success ms-2">Valide (<?= $entry->rating ?>/5)</span>
-                                        <?php elseif ($entry->status == 'rejete'): ?>
-                                            <span class="badge bg-danger ms-2" title="<?= htmlspecialchars($entry->rejection_reason) ?>">Rejeté</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-warning ms-2">Soumis</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="text-muted small"><?= htmlspecialchars($entry->task_description) ?></div>
-                                    <?php if ($entry->status == 'rejete'): ?>
-                                        <div class="text-danger small"><strong>Raison du rejet:</strong> <?= htmlspecialchars($entry->rejection_reason) ?></div>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="btn-list">
-                                        <?php if ($entry->status != 'valide'): ?>
-                                        <button onclick='editEntry(<?= json_encode($entry) ?>)' class="btn btn-icon btn-sm" title="Modifier">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" /><path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" /><line x1="16" y1="5" x2="19" y2="8" /></svg>
-                                        </button>
-                                        <button onclick="deleteEntry(<?= $entry->id ?>)" class="btn btn-icon btn-sm text-danger" title="Supprimer">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="4" y1="7" x2="20" y2="7" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
-                                        </button>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php endif; ?>
-                </div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Activités de la semaine</h3>
             </div>
-            <?php endfor; ?>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Heures</th>
+                            <th>Catégorie / Mission</th>
+                            <th>Description</th>
+                            <th>Statut</th>
+                            <th class="w-1"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($data['entries'])): ?>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    Aucune activité déclarée cette semaine. Cliquez sur un carré ci-dessus pour commencer.
+                                </td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach($data['entries'] as $entry): ?>
+                                <tr>
+                                    <td class="text-nowrap"><?= date('d/m', strtotime($entry->date)) ?></td>
+                                    <td class="text-nowrap">
+                                        <span class="badge bg-blue-lt">
+                                            <?= substr($entry->start_time, 0, 5) ?> - <?= substr($entry->end_time, 0, 5) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold"><?= htmlspecialchars($entry->category) ?></div>
+                                        <?php if ($entry->category == 'Mission'): ?>
+                                            <div class="text-muted small"><?= htmlspecialchars($entry->mission_title ?? $entry->custom_mission_name) ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-muted small"><?= htmlspecialchars($entry->task_description) ?></td>
+                                    <td>
+                                        <?php if ($entry->status == 'valide'): ?>
+                                            <span class="badge bg-success" title="Note: <?= $entry->rating ?>/5">Valide</span>
+                                        <?php elseif ($entry->status == 'rejete'): ?>
+                                            <span class="badge bg-danger" title="<?= htmlspecialchars($entry->rejection_reason) ?>">Rejeté</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-warning">En attente</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <div class="btn-list flex-nowrap">
+                                            <?php if ($entry->status != 'valide'): ?>
+                                                <button onclick='editEntry(<?= json_encode($entry) ?>)' class="btn btn-icon btn-sm" title="Modifier">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-edit-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3l-11.5 11.5l-4 1l1 -4l11.5 -11.5z" /></svg>
+                                                </button>
+                                                <button onclick="deleteEntry(<?= $entry->id ?>)" class="btn btn-icon btn-sm text-danger" title="Supprimer">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
+                                                </button>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
