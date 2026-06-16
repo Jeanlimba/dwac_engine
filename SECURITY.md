@@ -33,6 +33,17 @@ réaliser** (côté serveur / ops) et la suite de la professionnalisation.
   magiques ne le sont plus).
 - **Nettoyage** : suppression des layouts legacy inutilisés.
 
+### Phase 2 — Isolation tenant / IDOR
+- **Timesheets** : `validate()`/`reject()` filtrent par `tenant_id` (un
+  superviseur ne peut plus valider la feuille d'un autre tenant).
+- **Supervisor** : `processExpense()` et `getExpenseDetail()` vérifient que la
+  dépense appartient au tenant courant.
+- **GED** : contrôle de propriété (`ownedFolderOrDeny`/`ownedFileOrDeny`) sur
+  `rename/delete/move/copy/share/revokeShare/getShares`. Les actions GED sont
+  désormais **réservées au propriétaire** de l'item (un utilisateur avec un
+  simple partage ne peut plus modifier/supprimer l'item d'autrui — comportement
+  voulu). Vérifié en runtime (dossier propre → 200, dossier d'autrui → 403).
+
 ## ⚠️ Actions manuelles REQUISES (ops / hors code)
 
 1. **Régénérer le mot de passe MySQL de production** (`ONLINE_DB_PASS` a été
@@ -54,9 +65,9 @@ réaliser** (côté serveur / ops) et la suite de la professionnalisation.
 - **Composer + autoloading PSR-4** + namespaces (remplace les `require_once`
   manuels). Gros refactor (~30 fichiers) — prévoir une branche dédiée + tests.
 - **`.env` robuste** via `vlucas/phpdotenv` (dépend de Composer).
-- **IDOR restants** à corriger côté modèle : validation tenant dans
-  `Supervisor::processExpense`, `Timesheets::validate/reject`, et vérifs de
-  propriété dans les actions GED `share/delete/rename/move`.
+- **GED `delete` en GET** : action destructive déclenchée en GET (donc hors
+  protection CSRF, qui ne couvre que POST). À passer en POST. *(IDOR fermé, mais
+  CSRF encore possible sur cette action précise.)*
 - **Logging** structuré (monolog) + page d'erreur générique en prod.
 - **En-têtes de sécurité** (CSP, X-Frame-Options, X-Content-Type-Options).
 - **Pagination** sur les listes + audit des index SQL (`tenant_id`,
