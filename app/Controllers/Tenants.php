@@ -65,6 +65,7 @@ class Tenants extends Controller {
     }
 
     public function delete($id) {
+        $this->requirePost();
         if ($this->tenantModel->delete($id)) {
             header('Location: ' . URLROOT . '/tenants');
         } else {

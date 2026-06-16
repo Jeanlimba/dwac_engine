@@ -44,7 +44,10 @@
                             <td>
                                 <div class="btn-list flex-nowrap">
                                     <a href="<?= URLROOT ?>/tenants/edit/<?= $tenant->id ?>" class="btn btn-white btn-sm">Modifier</a>
-                                    <a href="<?= URLROOT ?>/tenants/delete/<?= $tenant->id ?>" class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette entreprise ? Tous les utilisateurs et données associés seront supprimés.')">Supprimer</a>
+                                    <form method="POST" action="<?= URLROOT ?>/tenants/delete/<?= $tenant->id ?>" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette entreprise ? Tous les utilisateurs et données associés seront supprimés.')">
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

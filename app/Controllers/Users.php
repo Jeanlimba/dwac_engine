@@ -106,6 +106,7 @@ class Users extends Controller {
     }
 
     public function delete($id) {
+        $this->requirePost();
         $user = $this->userModel->getUserById($id);
         if (!$user) die('Utilisateur non trouvé');
 
@@ -121,6 +122,7 @@ class Users extends Controller {
     }
 
     public function toggle($id) {
+        $this->requirePost();
         $user = $this->userModel->getUserById($id);
         if (!$user) die('Utilisateur non trouvé');
 

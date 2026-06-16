@@ -222,6 +222,7 @@ class Expenses extends Controller {
     }
 
     public function delete($id) {
+        $this->requirePost();
         $expense = $this->expenseModel->getExpenseById($id);
 
         if (!$expense || $expense->employee_id != $_SESSION['employee_id']) {

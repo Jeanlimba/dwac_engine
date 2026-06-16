@@ -118,4 +118,16 @@ class Controller {
             $this->redirectTo('dashboard');
         }
     }
+
+    /**
+     * Exige une requête POST. À placer en tête des actions destructives
+     * (suppression, changement d'état) : couplé à la vérification CSRF globale
+     * du front controller, cela empêche le déclenchement via un simple lien GET.
+     */
+    protected function requirePost() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            die('Méthode non autorisée.');
+        }
+    }
 }

@@ -130,7 +130,10 @@
                                                                 <?php endif; ?>
                                                                 <?php if($expense->status == 'En attente' || $expense->status == 'Rejeté' || $expense->status == 'Modification demandée'): ?>
                                                                     <a href="<?= URLROOT ?>/expenses/edit/<?= $expense->id ?>" class="dropdown-item">Modifier</a>
-                                                                    <a href="<?= URLROOT ?>/expenses/delete/<?= $expense->id ?>" class="dropdown-item text-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette dépense ?')">Supprimer</a>
+                                                                    <form method="POST" action="<?= URLROOT ?>/expenses/delete/<?= $expense->id ?>" class="m-0" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette dépense ?')">
+                                                                        <?= csrf_field() ?>
+                                                                        <button type="submit" class="dropdown-item text-danger">Supprimer</button>
+                                                                    </form>
                                                                 <?php endif; ?>
                                                             </div>
                                                         </div>

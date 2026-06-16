@@ -43,10 +43,12 @@ réaliser** (côté serveur / ops) et la suite de la professionnalisation.
   désormais **réservées au propriétaire** de l'item (un utilisateur avec un
   simple partage ne peut plus modifier/supprimer l'item d'autrui — comportement
   voulu). Vérifié en runtime (dossier propre → 200, dossier d'autrui → 403).
-- **GED `delete` et `revokeShare` en POST** : ces actions destructives passent
-  désormais par des formulaires POST (protégés CSRF) au lieu de liens GET.
-  Vérifié pour les deux : ancienne URL GET → 403, POST sans jeton → 403,
-  POST avec jeton → action effective.
+- **Actions destructives en POST** : toutes les actions d'état/suppression
+  passent désormais par des formulaires POST protégés CSRF (au lieu de liens
+  GET) — GED `delete`/`revokeShare`, `Users::delete`/`toggle`,
+  `Employees::delete`, `Tenants::delete`, `Expenses::delete`. Garde
+  `requirePost()` côté contrôleur. Vérifié : GET → 403/405, POST sans jeton →
+  403, POST avec jeton → action effective.
 
 ## ⚠️ Actions manuelles REQUISES (ops / hors code)
 
@@ -69,10 +71,9 @@ réaliser** (côté serveur / ops) et la suite de la professionnalisation.
 - **Composer + autoloading PSR-4** + namespaces (remplace les `require_once`
   manuels). Gros refactor (~30 fichiers) — prévoir une branche dédiée + tests.
 - **`.env` robuste** via `vlucas/phpdotenv` (dépend de Composer).
-- **Actions destructives encore en GET** (CSRF-able) à passer en POST :
-  `Users::delete` / `Users::toggleStatus`, `Employees::delete`. (Même classe que
-  les actions GED déjà corrigées ; `Notifications::markAllRead/markAsRead` en
-  GET aussi mais bénin.)
+- **`Notifications::markAllRead/markAsRead`** restent en GET mais sans enjeu
+  (marquer ses propres notifications comme lues) — à convertir si on veut être
+  exhaustif.
 - **Logging** structuré (monolog) + page d'erreur générique en prod.
 - **En-têtes de sécurité** (CSP, X-Frame-Options, X-Content-Type-Options).
 - **Pagination** sur les listes + audit des index SQL (`tenant_id`,

@@ -55,6 +55,7 @@ class Employees extends Controller {
     }
 
     public function delete($id) {
+        $this->requirePost();
         $is_admin = !isset($_SESSION['employee_id']) || $_SESSION['employee_id'] === null;
         $is_privileged_role = isset($_SESSION['user_role']) && ($_SESSION['user_role'] === 'superviseur' || $_SESSION['user_role'] === 'manager');
 

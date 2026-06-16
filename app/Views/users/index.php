@@ -57,10 +57,16 @@
                                 <div class="btn-list flex-nowrap">
                                     <a href="<?= URLROOT ?>/users/edit/<?= $user->id ?>" class="btn btn-white btn-sm">Modifier</a>
                                     <?php if (!$user->is_super_admin): ?>
-                                        <a href="<?= URLROOT ?>/users/toggle/<?= $user->id ?>" class="btn <?= $user->status === 'active' ? 'btn-warning' : 'btn-success' ?> btn-sm">
-                                            <?= $user->status === 'active' ? 'Bloquer' : 'Débloquer' ?>
-                                        </a>
-                                        <a href="<?= URLROOT ?>/users/delete/<?= $user->id ?>" class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">Supprimer</a>
+                                        <form method="POST" action="<?= URLROOT ?>/users/toggle/<?= $user->id ?>" class="d-inline">
+                                            <?= csrf_field() ?>
+                                            <button type="submit" class="btn <?= $user->status === 'active' ? 'btn-warning' : 'btn-success' ?> btn-sm">
+                                                <?= $user->status === 'active' ? 'Bloquer' : 'Débloquer' ?>
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="<?= URLROOT ?>/users/delete/<?= $user->id ?>" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
+                                            <?= csrf_field() ?>
+                                            <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                                        </form>
                                     <?php endif; ?>
                                 </div>
                             </td>
