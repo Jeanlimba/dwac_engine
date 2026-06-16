@@ -145,6 +145,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 .then(response => response.json())
                 .then(data => {
                     body.innerHTML = '';
+                    // Jeton CSRF pour les formulaires générés dynamiquement
+                    // (l'injection auto ne couvre que les formulaires présents au chargement).
+                    const csrfToken = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
                     if (data.length === 0) {
                         body.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Aucun partage actif.</td></tr>';
                     } else {
@@ -157,9 +160,10 @@ document.addEventListener("DOMContentLoaded", function() {
                                     <td>${share.shared_with_name}</td>
                                     <td><span class="badge ${permClass}">${permLabel}</span></td>
                                     <td>
-                                        <a href="<?= URLROOT ?>/ged/revokeShare/${share.id}/${currentFolderId}" class="btn btn-sm btn-outline-danger">
-                                            Retirer
-                                        </a>
+                                        <form method="POST" action="<?= URLROOT ?>/ged/revokeShare/${share.id}/${currentFolderId}" class="m-0" onsubmit="return confirm('Retirer ce partage ?');">
+                                            <input type="hidden" name="csrf_token" value="${csrfToken}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Retirer</button>
+                                        </form>
                                     </td>
                                 </tr>`;
                         });

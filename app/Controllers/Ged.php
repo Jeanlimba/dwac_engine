@@ -283,6 +283,10 @@ class Ged extends Controller {
     }
 
     public function revokeShare($shareId, $currentFolderId) {
+        // POST uniquement (protégé CSRF par le front controller).
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->denyAccess();
+        }
         require_once '../app/Models/GedShare.php';
         $shareModel = new GedShare();
         $share = $shareModel->getShareById($shareId);

@@ -43,9 +43,10 @@ réaliser** (côté serveur / ops) et la suite de la professionnalisation.
   désormais **réservées au propriétaire** de l'item (un utilisateur avec un
   simple partage ne peut plus modifier/supprimer l'item d'autrui — comportement
   voulu). Vérifié en runtime (dossier propre → 200, dossier d'autrui → 403).
-- **GED `delete` en POST** : la suppression passe désormais par un formulaire
-  POST (protégé CSRF) au lieu d'un lien GET. Vérifié : ancienne URL GET → 403,
-  POST sans jeton → 403, POST avec jeton → suppression effective.
+- **GED `delete` et `revokeShare` en POST** : ces actions destructives passent
+  désormais par des formulaires POST (protégés CSRF) au lieu de liens GET.
+  Vérifié pour les deux : ancienne URL GET → 403, POST sans jeton → 403,
+  POST avec jeton → action effective.
 
 ## ⚠️ Actions manuelles REQUISES (ops / hors code)
 
