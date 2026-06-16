@@ -108,29 +108,35 @@ class Ged extends Controller {
 
     public function upload() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
+            // (La vérification CSRF est assurée globalement par le front controller App.)
             $folderId = $_POST['parent_id'];
             $targetDir = APPROOT . '/../public/uploads/ged/';
-            
+
+            // 0755 et non 0777 : le dossier ne doit pas être inscriptible par tous.
             if (!is_dir($targetDir)) {
-                mkdir($targetDir, 0777, true);
+                mkdir($targetDir, 0755, true);
             }
 
             foreach ($_FILES['files']['tmp_name'] as $key => $tmpName) {
                 $name = $_FILES['files']['name'][$key];
                 $size = $_FILES['files']['size'][$key];
-                $type = $_FILES['files']['type'][$key];
-                $extension = pathinfo($name, PATHINFO_EXTENSION);
-                $physicalName = uniqid() . '.' . $extension;
 
-                if (move_uploaded_file($tmpName, $targetDir . $physicalName)) {
+                // Validation de sécurité : extension en liste blanche, MIME réel,
+                // nom physique aléatoire. Un fichier refusé est simplement ignoré.
+                $check = validate_upload($name, $tmpName, $size);
+                if (!$check['ok']) {
+                    continue;
+                }
+
+                if (move_uploaded_file($tmpName, $targetDir . $check['physical_name'])) {
                     $fileData = [
                         'folder_id' => $folderId,
                         'user_id' => $_SESSION['user_id'],
                         'name' => $name,
-                        'physical_name' => $physicalName,
+                        'physical_name' => $check['physical_name'],
                         'size' => $size,
-                        'extension' => $extension,
-                        'mime_type' => $type
+                        'extension' => $check['extension'],
+                        'mime_type' => $check['mime'] // MIME réel détecté, pas celui du client
                     ];
                     $this->gedFileModel->addFile($fileData);
                 }

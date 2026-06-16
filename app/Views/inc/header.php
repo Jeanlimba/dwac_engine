@@ -13,6 +13,8 @@ $user_photo = $_SESSION['user_photo'] ?? '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
+    <?php require_once APPROOT . '/../templates/partials/csrf_js.php'; ?>
     <title><?= $data['title'] ?? SITENAME ?> | <?= SITENAME ?></title>
     <link rel="icon" type="image/png" href="<?= URLROOT ?>/public/assets/dwac.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">

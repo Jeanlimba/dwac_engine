@@ -12,6 +12,7 @@ $tenant_id = $_SESSION['tenant_id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
+    csrf_check_or_die(); // Protection CSRF
     $action = $_POST['action'] ?? 'save';
     $id = $_POST['id'] ?? null;
 

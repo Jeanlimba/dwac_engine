@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['success' => false, 'message' => 'Authentification requise.']);
         exit;
     }
+    csrf_check_or_die(); // Protection CSRF
 
     $tenant_id = $_SESSION['tenant_id'];
 

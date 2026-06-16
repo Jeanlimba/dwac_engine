@@ -20,6 +20,7 @@ class App {
         }
 
         require_once APPROOT . '/Controllers/' . $this->currentController . '.php';
+        $controllerName = $this->currentController;
         $this->currentController = new $this->currentController;
 
         // Check for second part of url
@@ -32,6 +33,14 @@ class App {
 
         // Get params
         $this->params = $url ? array_values($url) : [];
+
+        // Protection CSRF globale : toute requête POST routée par un contrôleur
+        // doit porter un jeton valide (champ POST csrf_token ou en-tête
+        // X-CSRF-Token pour l'AJAX). Exception : Externalged, dépôt PUBLIC
+        // protégé par un jeton d'URL et sans session utilisateur.
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $controllerName !== 'Externalged') {
+            csrf_check_or_die();
+        }
 
         // Call a callback with array of params
         call_user_func_array([$this->currentController, $this->currentMethod], $this->params);

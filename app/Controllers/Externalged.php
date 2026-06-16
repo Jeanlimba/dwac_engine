@@ -117,8 +117,13 @@ class Externalged extends Controller {
             finfo_close($finfo);
         }
 
+        // Nom assaini : on retire les caractères de contrôle (\r\n) pour éviter
+        // une injection d'en-tête HTTP via un nom de fichier piégé, et les
+        // guillemets qui casseraient l'attribut filename.
+        $safeName = preg_replace('/[\r\n"\\\\]+/', '_', $file->name);
+
         header('Content-Type: ' . $mimeType);
-        header('Content-Disposition: inline; filename="' . $file->name . '"');
+        header('Content-Disposition: inline; filename="' . $safeName . '"');
         header('Content-Length: ' . filesize($filePath));
         header('Cache-Control: public, max-age=3600');
         
@@ -158,7 +163,8 @@ class Externalged extends Controller {
                 $targetDir = APPROOT . '/../public/uploads/ged/';
                 
                 if (!is_dir($targetDir)) {
-                    if (!mkdir($targetDir, 0777, true)) {
+                    // 0755 : pas de droit d'écriture pour "tout le monde".
+                    if (!mkdir($targetDir, 0755, true)) {
                         throw new Exception("Impossible de créer le dossier d'upload.");
                     }
                 }
@@ -176,19 +182,24 @@ class Externalged extends Controller {
 
                     $name = $_FILES['files']['name'][$key];
                     $size = $_FILES['files']['size'][$key];
-                    $type = $_FILES['files']['type'][$key];
-                    $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-                    $physicalName = uniqid() . '.' . $extension;
 
-                    if (move_uploaded_file($tmpName, $targetDir . $physicalName)) {
+                    // Validation de sécurité (dépôt PUBLIC : contrôle d'autant plus
+                    // important). Extension en liste blanche + MIME réel + nom aléatoire.
+                    $check = validate_upload($name, $tmpName, $size);
+                    if (!$check['ok']) {
+                        $errors[] = $check['error'] . " (" . $name . ")";
+                        continue;
+                    }
+
+                    if (move_uploaded_file($tmpName, $targetDir . $check['physical_name'])) {
                         $fileData = [
                             'folder_id' => $targetFolderId,
                             'user_id' => null,
                             'name' => $name,
-                            'physical_name' => $physicalName,
+                            'physical_name' => $check['physical_name'],
                             'size' => $size,
-                            'extension' => $extension,
-                            'mime_type' => $type
+                            'extension' => $check['extension'],
+                            'mime_type' => $check['mime']
                         ];
                         if ($this->gedFileModel->addFile($fileData)) {
                             $uploadedCount++;

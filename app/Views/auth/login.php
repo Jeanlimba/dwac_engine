@@ -23,6 +23,7 @@
                         <div class="alert alert-danger"><?= $_SESSION['login_error']; unset($_SESSION['login_error']); ?></div>
                     <?php endif; ?>
                     <form action="<?= URLROOT ?>/auth" method="post" autocomplete="off">
+                        <?= csrf_field() // Jeton anti-CSRF (page de login autonome, sans le patch JS global) ?>
                         <div class="mb-3">
                             <label class="form-label">Nom d'utilisateur</label>
                             <input type="text" name="username" class="form-control" placeholder="votre@email.com" autocomplete="off" required>

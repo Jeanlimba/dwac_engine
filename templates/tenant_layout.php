@@ -12,6 +12,8 @@ $user_display_name = $is_employee ? 'Employé' : 'Admin Tenant';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
+    <?php require_once dirname(__DIR__) . '/templates/partials/csrf_js.php'; ?>
     <title><?= $title ?? $user_display_name ?> | <?= SITENAME ?></title>
     <link rel="icon" type="image/png" href="<?= URLROOT ?>/public/assets/dwac.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">

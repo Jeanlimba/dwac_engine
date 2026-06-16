@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['success' => false, 'message' => 'Authentication required.']);
         exit;
     }
+    csrf_check_or_die(); // Protection CSRF
 
     $employee_id = $_POST['employee_id'] ?? null;
     $request_id = $_POST['request_id'] ?? null;

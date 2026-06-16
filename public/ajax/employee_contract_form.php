@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         require_once '../../config/database.php';
         require_once '../../src/functions.php';
+        csrf_check_or_die(); // Protection CSRF (functions.php chargé juste au-dessus)
 
         $employee_id = $_POST['employee_id'] ?? null;
         $tenant_id = $_POST['tenant_id'] ?? null;

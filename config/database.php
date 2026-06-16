@@ -12,15 +12,10 @@ load_env(__DIR__ . '/../.env');
 $is_local = false;
 
 if (isset($_SERVER['HTTP_HOST'])) {
-    // Si on est via un navigateur
-    $host = $_SERVER['HTTP_HOST'];
-    if ($host === 'localhost' || $host === '127.0.0.1' || 
-        (strlen($host) > 5 && substr($host, -5) === '.test') || 
-        (strlen($host) > 6 && substr($host, -6) === '.local')) {
-        $is_local = true;
-    }
+    // Via un navigateur : détection centralisée (gère le port et les TLD de dev).
+    $is_local = is_local_host($_SERVER['HTTP_HOST']);
 } else {
-    // Si on est en ligne de commande (CLI), on vérifie l'OS (Windows = local en général pour ce projet)
+    // En ligne de commande (CLI) : Windows = local en général pour ce projet.
     if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
         $is_local = true;
     }

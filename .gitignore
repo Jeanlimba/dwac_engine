@@ -6,6 +6,8 @@
 # Project specific
 public/uploads/*
 !public/uploads/.gitkeep
+# Le .htaccess de sécurité (anti-RCE) DOIT être versionné et déployé.
+!public/uploads/.htaccess
 
 # OS generated files
 Thumbs.db
@@ -15,6 +17,10 @@ Desktop.ini
 # IDEs
 .vscode/
 .idea/
+
+# Dev/test helpers (locaux, non déployés)
+/router.php
+.claude/launch.json
 
 # Logs
 *.log

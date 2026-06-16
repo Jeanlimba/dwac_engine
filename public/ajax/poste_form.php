@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['success' => false, 'message' => 'Authentication required.']);
         exit;
     }
+    csrf_check_or_die(); // Protection CSRF
 
     $nom_poste = trim($_POST['nom_poste'] ?? '');
     $description = trim($_POST['description'] ?? '');

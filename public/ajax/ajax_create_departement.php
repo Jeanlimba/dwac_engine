@@ -18,6 +18,7 @@ $tenant_id = $_SESSION['tenant_id'];
 $response = ['success' => false, 'message' => 'Une erreur inconnue est survenue.'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
+    csrf_check_or_die(); // Protection CSRF
     $name = trim($_POST['name']);
     $parent_id = !empty($_POST['parent_id']) ? $_POST['parent_id'] : null;
 

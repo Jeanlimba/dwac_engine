@@ -1,17 +1,33 @@
 <?php
-// Enable error reporting for debugging
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 // Include Helper Functions
 require_once __DIR__ . '/../src/functions.php';
 
+// Load Config from .env (avant la config d'erreurs : elle en dépend)
+load_env(__DIR__ . '/../.env');
+
+/*
+ * Gestion des erreurs selon l'environnement.
+ * Le .env étant partagé (local + prod, sélectionnés par détection d'hôte), on
+ * décide de l'affichage des erreurs à partir de l'hôte courant, comme le fait
+ * config/database.php. En PRODUCTION on n'affiche JAMAIS les erreurs à l'écran
+ * (fuite de chemins, requêtes SQL, secrets) : on les journalise uniquement.
+ * APP_DEBUG=true dans le .env peut forcer l'affichage si vraiment nécessaire.
+ */
+$isLocalEnv = is_local_host($_SERVER['HTTP_HOST'] ?? '');
+$appDebug = defined('APP_DEBUG') ? filter_var(APP_DEBUG, FILTER_VALIDATE_BOOLEAN) : false;
+
+error_reporting(E_ALL);
+ini_set('log_errors', '1');
+if ($isLocalEnv || $appDebug) {
+    ini_set('display_errors', '1');
+    ini_set('display_startup_errors', '1');
+} else {
+    ini_set('display_errors', '0');
+    ini_set('display_startup_errors', '0');
+}
+
 // Initialize Session
 init_session();
-
-// Load Config from .env
-load_env(__DIR__ . '/../.env');
 
 // Define URLROOT dynamically
 $protocol = "http";
