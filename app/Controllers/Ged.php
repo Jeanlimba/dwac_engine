@@ -160,6 +160,43 @@ class Ged extends Controller {
         }
     }
 
+    /* =====================================================================
+     * Helpers de propriété (anti-IDOR)
+     * ---------------------------------------------------------------------
+     * Les actions GED reçoivent des identifiants depuis le client ; sans
+     * contrôle, un utilisateur pourrait agir sur les dossiers/fichiers d'un
+     * autre en devinant l'ID. Ces helpers vérifient la propriété avant action.
+     * ===================================================================== */
+
+    /** Le dossier doit appartenir à l'utilisateur courant, sinon 403. */
+    private function ownedFolderOrDeny($folderId) {
+        $folder = $this->gedFolderModel->getFolderById($folderId);
+        if (!$folder || $folder->user_id != $_SESSION['user_id']) {
+            $this->denyAccess();
+        }
+        return $folder;
+    }
+
+    /**
+     * Le fichier doit se trouver dans un dossier appartenant à l'utilisateur
+     * courant. Les fichiers déposés en externe ont user_id = null : on se
+     * base donc sur le propriétaire du dossier parent.
+     */
+    private function ownedFileOrDeny($fileId) {
+        $file = $this->gedFileModel->getFileById($fileId);
+        if (!$file) {
+            $this->denyAccess();
+        }
+        $this->ownedFolderOrDeny($file->folder_id);
+        return $file;
+    }
+
+    /** Réponse 403 puis arrêt. */
+    private function denyAccess() {
+        http_response_code(403);
+        die('Accès non autorisé.');
+    }
+
     public function rename() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $id = $_POST['id'];
@@ -169,8 +206,10 @@ class Ged extends Controller {
 
             if (!empty($newName)) {
                 if ($type === 'folder') {
+                    $this->ownedFolderOrDeny($id);
                     $this->gedFolderModel->renameFolder($id, $newName);
                 } else {
+                    $this->ownedFileOrDeny($id);
                     $this->gedFileModel->renameFile($id, $newName);
                 }
                 header('Location: ' . URLROOT . '/ged/folder/' . $currentFolderId);
@@ -180,8 +219,10 @@ class Ged extends Controller {
 
     public function delete($type, $id, $currentFolderId) {
         if ($type === 'folder') {
+            $this->ownedFolderOrDeny($id);
             $this->gedFolderModel->deleteFolder($id);
         } else {
+            $this->ownedFileOrDeny($id);
             // Suppression physique et logique
             $file = $this->gedFileModel->getFileById($id);
             if ($file) {
@@ -200,6 +241,13 @@ class Ged extends Controller {
             $userIds = $_POST['user_ids']; // Tableau d'IDs
             $permission = $_POST['permission'];
             $currentFolderId = $_POST['current_folder_id'];
+
+            // Seul le propriétaire de l'item peut le partager (anti-IDOR).
+            if ($type === 'folder') {
+                $this->ownedFolderOrDeny($itemId);
+            } else {
+                $this->ownedFileOrDeny($itemId);
+            }
 
             require_once '../app/Models/GedShare.php';
             $shareModel = new GedShare();
@@ -226,11 +274,27 @@ class Ged extends Controller {
     public function revokeShare($shareId, $currentFolderId) {
         require_once '../app/Models/GedShare.php';
         $shareModel = new GedShare();
+        $share = $shareModel->getShareById($shareId);
+        if (!$share) {
+            $this->denyAccess();
+        }
+        // Seul le propriétaire de l'item partagé peut révoquer le partage.
+        if ($share->folder_id) {
+            $this->ownedFolderOrDeny($share->folder_id);
+        } else {
+            $this->ownedFileOrDeny($share->file_id);
+        }
         $shareModel->revokeShare($shareId);
         header('Location: ' . URLROOT . '/ged/folder/' . $currentFolderId);
     }
 
     public function getShares($type, $id) {
+        // Ne révèle les partages que pour un item appartenant à l'utilisateur.
+        if ($type === 'folder') {
+            $this->ownedFolderOrDeny($id);
+        } else {
+            $this->ownedFileOrDeny($id);
+        }
         require_once '../app/Models/GedShare.php';
         $shareModel = new GedShare();
         $shares = $shareModel->getItemShares($type, $id);
@@ -245,9 +309,14 @@ class Ged extends Controller {
             $newParentId = $_POST['destination_id'];
             $currentFolderId = $_POST['current_folder_id'];
 
+            // L'item déplacé ET le dossier de destination doivent appartenir
+            // à l'utilisateur courant (anti-IDOR).
+            $this->ownedFolderOrDeny($newParentId);
             if ($type === 'folder') {
+                $this->ownedFolderOrDeny($id);
                 $this->gedFolderModel->moveFolder($id, $newParentId);
             } else {
+                $this->ownedFileOrDeny($id);
                 $this->gedFileModel->moveFile($id, $newParentId);
             }
             header('Location: ' . URLROOT . '/ged/folder/' . $currentFolderId);
@@ -261,9 +330,13 @@ class Ged extends Controller {
             $newParentId = $_POST['destination_id'];
             $currentFolderId = $_POST['current_folder_id'];
 
+            // Source et destination doivent appartenir à l'utilisateur courant.
+            $this->ownedFolderOrDeny($newParentId);
             if ($type === 'folder') {
+                $this->ownedFolderOrDeny($id);
                 $this->gedFolderModel->copyFolder($id, $newParentId, $this->gedFileModel);
             } else {
+                $this->ownedFileOrDeny($id);
                 $this->gedFileModel->copyFile($id, $newParentId);
             }
             header('Location: ' . URLROOT . '/ged/folder/' . $currentFolderId);

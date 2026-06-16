@@ -54,6 +54,12 @@ class GedShare {
         return $this->db->resultSet();
     }
 
+    public function getShareById($shareId) {
+        $this->db->query("SELECT * FROM ged_shares WHERE id = :id");
+        $this->db->bind(':id', $shareId);
+        return $this->db->single();
+    }
+
     public function revokeShare($shareId) {
         $this->db->query("DELETE FROM ged_shares WHERE id = :id");
         $this->db->bind(':id', $shareId);

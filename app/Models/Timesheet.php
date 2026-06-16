@@ -72,19 +72,23 @@ class Timesheet {
         return $this->db->resultSet();
     }
 
-    public function validate($id, $rating, $user_id) {
-        $this->db->query("UPDATE timesheets SET status = 'valide', rating = :rating, validated_by = :validated_by, validated_at = CURRENT_TIMESTAMP WHERE id = :id");
+    public function validate($id, $rating, $user_id, $tenant_id) {
+        // Le filtre sur tenant_id empêche un superviseur de valider la feuille
+        // de temps d'un autre tenant (anti-IDOR).
+        $this->db->query("UPDATE timesheets SET status = 'valide', rating = :rating, validated_by = :validated_by, validated_at = CURRENT_TIMESTAMP WHERE id = :id AND tenant_id = :tenant_id");
         $this->db->bind(':rating', $rating);
         $this->db->bind(':validated_by', $user_id);
         $this->db->bind(':id', $id);
+        $this->db->bind(':tenant_id', $tenant_id);
         return $this->db->execute();
     }
 
-    public function reject($id, $reason, $user_id) {
-        $this->db->query("UPDATE timesheets SET status = 'rejete', rejection_reason = :reason, validated_by = :validated_by, validated_at = CURRENT_TIMESTAMP WHERE id = :id");
+    public function reject($id, $reason, $user_id, $tenant_id) {
+        $this->db->query("UPDATE timesheets SET status = 'rejete', rejection_reason = :reason, validated_by = :validated_by, validated_at = CURRENT_TIMESTAMP WHERE id = :id AND tenant_id = :tenant_id");
         $this->db->bind(':reason', $reason);
         $this->db->bind(':validated_by', $user_id);
         $this->db->bind(':id', $id);
+        $this->db->bind(':tenant_id', $tenant_id);
         return $this->db->execute();
     }
 

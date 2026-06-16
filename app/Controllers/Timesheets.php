@@ -117,7 +117,7 @@ class Timesheets extends Controller {
             header('Content-Type: application/json');
             $id = $_POST['id'];
             $rating = $_POST['rating'];
-            $success = $this->timesheetModel->validate($id, $rating, $_SESSION['user_id']);
+            $success = $this->timesheetModel->validate($id, $rating, $_SESSION['user_id'], $_SESSION['tenant_id']);
             echo json_encode(['success' => $success]);
             exit;
         }
@@ -128,7 +128,7 @@ class Timesheets extends Controller {
             header('Content-Type: application/json');
             $id = $_POST['id'];
             $reason = $_POST['rejection_reason'];
-            $success = $this->timesheetModel->reject($id, $reason, $_SESSION['user_id']);
+            $success = $this->timesheetModel->reject($id, $reason, $_SESSION['user_id'], $_SESSION['tenant_id']);
             echo json_encode(['success' => $success]);
             exit;
         }

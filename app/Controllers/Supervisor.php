@@ -711,7 +711,9 @@ class Supervisor extends Controller {
         $role = $_SESSION['user_role'];
         
         $expense = $this->expenseModel->getExpenseById($id);
-        if (!$expense) {
+        // Vérifie que la dépense appartient bien au tenant courant : empêche un
+        // superviseur/manager de valider/rejeter la dépense d'un autre tenant (IDOR).
+        if (!$expense || $expense->tenant_id != $_SESSION['tenant_id']) {
             header('Location: ' . URLROOT . '/supervisor/expenses');
             exit;
         }
@@ -767,7 +769,8 @@ class Supervisor extends Controller {
 
     public function getExpenseDetail($id) {
         $expense = $this->expenseModel->getExpenseById($id);
-        if (!$expense) {
+        // Ne divulgue le détail que pour une dépense du tenant courant (IDOR).
+        if (!$expense || $expense->tenant_id != $_SESSION['tenant_id']) {
             echo json_encode(['success' => false]);
             exit;
         }
