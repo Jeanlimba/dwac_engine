@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../config/database.php';
+require_once '../../config/database.php';
 
 // Handle POST request to save a new poste
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

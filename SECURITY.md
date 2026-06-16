@@ -80,6 +80,45 @@ réaliser** (côté serveur / ops) et la suite de la professionnalisation.
   `employee_id`, `username`).
 - **Tests** (PHPUnit) sur l'auth, l'isolation tenant et la validation d'upload.
 
+## 🌐 Déploiement en hébergement mutualisé
+
+L'application est compatible mutualisé (PHP + MySQL, sans Composer ni build),
+mais quelques points sont spécifiques à ce type d'hébergement.
+
+### Compatible d'office
+- Pile PHP/MySQL/PDO standard, **aucune dépendance à installer** (pas de
+  `vendor/`).
+- Routage par `.htaccess`/mod_rewrite (Apache et LiteSpeed le supportent).
+- HTTPS derrière proxy géré (`X-Forwarded-Proto`), sessions fichier,
+  `display_errors` coupé en prod.
+- `mkdir` en `0755` (compatible suEXEC).
+
+### Points à vérifier / risques propres au mutualisé
+1. **Document root = `public/`** (le plus important). Sinon, si mod_rewrite est
+   désactivé ou `AllowOverride` limité, `.env`/`config/`/`scripts/` peuvent
+   devenir téléchargeables. Pointer le domaine sur le sous-dossier `public/`.
+2. **`.htaccess` des uploads selon le SAPI** : en mod_php, `php_flag engine off`
+   agit ; en PHP-FPM/CGI il est ignoré (protégé par `<IfModule mod_php.c>`, donc
+   pas de 500) et la protection repose alors sur `<FilesMatch> Require all
+   denied`. **À tester** : un `.php` déposé dans `public/uploads/` doit renvoyer
+   **403** (ni exécution, ni 500 sur tout le dossier).
+3. **PHP 8.x** avec les extensions **`pdo_mysql`** et **`fileinfo`** (la
+   validation d'upload utilise `finfo`).
+4. **`public/uploads/` inscriptible** par l'utilisateur web (le contenu est
+   gitignoré : à créer/chmoder au déploiement).
+5. **Hôte MySQL** : sur beaucoup de cPanel la base est en `localhost`. Un
+   fallback automatique vers `localhost` existe si `ONLINE_DB_HOST` échoue, mais
+   autant renseigner directement la bonne valeur dans le `.env`.
+
+### Checklist de mise en production
+1. Document root du domaine → `public/`.
+2. PHP 8.x + extensions `fileinfo` / `pdo_mysql`.
+3. `.env` de prod renseigné — et **secrets régénérés** (cf. actions requises).
+4. `public/uploads/` créé et inscriptible.
+5. Tests post-déploiement : connexion OK, upload légitime OK, `.php` dans
+   `public/uploads/` → **403**, une suppression (utilisateur/dépense) via le
+   bouton fonctionne (POST + CSRF).
+
 ## Note dev
 
 `router.php` (racine) et `.claude/launch.json` sont des aides de **test local**
