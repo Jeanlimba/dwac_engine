@@ -3,10 +3,7 @@ class Notifications extends Controller {
     private $notificationModel;
 
     public function __construct() {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . URLROOT . '/auth');
-            exit;
-        }
+        $this->requireLogin();
         $this->notificationModel = $this->model('Notification');
     }
 

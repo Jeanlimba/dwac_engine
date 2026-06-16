@@ -4,15 +4,8 @@ class Ged extends Controller {
     private $gedFileModel;
 
     public function __construct() {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . URLROOT . '/auth');
-            exit;
-        }
-
-        if ($_SESSION['is_super_admin']) {
-            header('Location: ' . URLROOT . '/dashboard');
-            exit;
-        }
+        $this->requireLogin();
+        $this->denySuperAdmin();
 
         $this->gedFolderModel = $this->model('GedFolder');
         $this->gedFileModel = $this->model('GedFile');

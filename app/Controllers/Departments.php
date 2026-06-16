@@ -2,16 +2,8 @@
 class Departments extends Controller {
     private $departmentModel;
     public function __construct() {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . URLROOT . '/auth');
-            exit;
-        }
-
-        // Restriction Employé et Super Admin
-        if ((isset($_SESSION['employee_id']) && $_SESSION['employee_id'] !== null) || $_SESSION['is_super_admin']) {
-            header('Location: ' . URLROOT . '/dashboard');
-            exit;
-        }
+        // Réservé aux administrateurs de tenant (non-employés, non super-admins).
+        $this->requireTenantAdmin();
 
         $this->departmentModel = $this->model('Department');
     }

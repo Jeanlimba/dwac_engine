@@ -5,15 +5,8 @@ class Expenses extends Controller {
     private $notificationModel;
 
     public function __construct() {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . URLROOT . '/auth');
-            exit;
-        }
-
-        if ($_SESSION['is_super_admin']) {
-            header('Location: ' . URLROOT . '/dashboard');
-            exit;
-        }
+        $this->requireLogin();
+        $this->denySuperAdmin();
 
         $this->expenseModel = $this->model('Expense');
         $this->missionModel = $this->model('Mission');

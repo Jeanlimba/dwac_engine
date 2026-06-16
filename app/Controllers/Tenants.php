@@ -3,10 +3,7 @@ class Tenants extends Controller {
     private $tenantModel;
 
     public function __construct() {
-        if (!isset($_SESSION['user_id']) || !$_SESSION['is_super_admin']) {
-            header('Location: ' . URLROOT . '/dashboard');
-            exit;
-        }
+        $this->requireSuperAdmin();
 
         $this->tenantModel = $this->model('Tenant');
     }

@@ -4,18 +4,11 @@ class Users extends Controller {
     private $tenantModel;
 
     public function __construct() {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . URLROOT . '/auth');
-            exit;
-        }
+        $this->requireLogin();
 
-        // Check if user is Super Admin or Tenant Admin (non-employee)
-        $is_super_admin = $_SESSION['is_super_admin'];
-        $is_tenant_admin = !isset($_SESSION['employee_id']) || $_SESSION['employee_id'] === null;
-
-        if (!$is_super_admin && !$is_tenant_admin) {
-            header('Location: ' . URLROOT . '/dashboard');
-            exit;
+        // Réservé aux super-admins OU aux administrateurs de tenant (non-employés).
+        if (!$this->isSuperAdmin() && $this->isEmployee()) {
+            $this->redirectTo('dashboard');
         }
 
         $this->userModel = $this->model('User');

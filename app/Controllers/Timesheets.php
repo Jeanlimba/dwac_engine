@@ -5,10 +5,7 @@ class Timesheets extends Controller {
     private $employeeModel;
 
     public function __construct() {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . URLROOT . '/auth');
-            exit;
-        }
+        $this->requireLogin();
 
         $this->timesheetModel = $this->model('Timesheet');
         $this->missionModel = $this->model('Mission');

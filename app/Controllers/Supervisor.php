@@ -10,10 +10,7 @@ class Supervisor extends Controller {
     private $notificationModel;
 
     public function __construct() {
-        if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] !== 'superviseur' && $_SESSION['user_role'] !== 'manager')) {
-            header('Location: ' . URLROOT . '/auth');
-            exit;
-        }
+        $this->requireRole(['superviseur', 'manager']);
 
         $this->partnerModel = $this->model('Partner');
         $this->missionModel = $this->model('Mission');

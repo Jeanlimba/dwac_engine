@@ -2,16 +2,9 @@
 class Employees extends Controller {
     private $employeeModel;
     public function __construct() {
-        // Protection de la route
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . URLROOT . '/auth');
-            exit;
-        }
-
-        if ($_SESSION['is_super_admin']) {
-            header('Location: ' . URLROOT . '/dashboard');
-            exit;
-        }
+        // Espace tenant : connexion requise, super-admin exclu.
+        $this->requireLogin();
+        $this->denySuperAdmin();
 
         $this->employeeModel = $this->model('Employee');
     }
