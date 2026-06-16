@@ -190,7 +190,12 @@ function formatSize($bytes) {
                                         <a class="dropdown-item manage-access-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= $folder->name ?>" data-type="folder" onclick="event.stopPropagation();">Gérer les accès</a>
                                     <?php endif; ?>
                                     <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item text-danger" href="<?= URLROOT ?>/ged/delete/folder/<?= $folder->id ?>/<?= $data['current_folder']->id ?>" onclick="event.stopPropagation(); return confirm('Supprimer ce dossier et tout son contenu ?');">Supprimer</a>
+                                    <form method="POST" action="<?= URLROOT ?>/ged/delete" class="m-0" onsubmit="event.stopPropagation(); return confirm('Supprimer ce dossier et tout son contenu ?');">
+                                        <input type="hidden" name="type" value="folder">
+                                        <input type="hidden" name="id" value="<?= $folder->id ?>">
+                                        <input type="hidden" name="current_folder_id" value="<?= $data['current_folder']->id ?>">
+                                        <button type="submit" class="dropdown-item text-danger">Supprimer</button>
+                                    </form>
                                 <?php else: ?>
                                     <a class="dropdown-item external-link-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= $folder->name ?>" onclick="event.stopPropagation();">Lien de partage (Dépôt)</a>
                                 <?php endif; ?>
@@ -238,7 +243,12 @@ function formatSize($bytes) {
                                     <a class="dropdown-item share-item" href="#" data-id="<?= $file->id ?>" data-name="<?= $file->name ?>" data-type="file" onclick="event.stopPropagation();">Partager</a>
                                     <a class="dropdown-item" href="#" onclick="event.stopPropagation();">Remplacer</a>
                                     <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item text-danger" href="<?= URLROOT ?>/ged/delete/file/<?= $file->id ?>/<?= $data['current_folder']->id ?? 0 ?>" onclick="event.stopPropagation(); return confirm('Supprimer ce fichier ?');">Supprimer</a>
+                                    <form method="POST" action="<?= URLROOT ?>/ged/delete" class="m-0" onsubmit="event.stopPropagation(); return confirm('Supprimer ce fichier ?');">
+                                        <input type="hidden" name="type" value="file">
+                                        <input type="hidden" name="id" value="<?= $file->id ?>">
+                                        <input type="hidden" name="current_folder_id" value="<?= $data['current_folder']->id ?? 0 ?>">
+                                        <button type="submit" class="dropdown-item text-danger">Supprimer</button>
+                                    </form>
                                 <?php else: ?>
                                     <a class="dropdown-item disabled" href="#">Fichier de mission protégé</a>
                                 <?php endif; ?>

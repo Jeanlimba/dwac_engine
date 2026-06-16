@@ -43,6 +43,9 @@ réaliser** (côté serveur / ops) et la suite de la professionnalisation.
   désormais **réservées au propriétaire** de l'item (un utilisateur avec un
   simple partage ne peut plus modifier/supprimer l'item d'autrui — comportement
   voulu). Vérifié en runtime (dossier propre → 200, dossier d'autrui → 403).
+- **GED `delete` en POST** : la suppression passe désormais par un formulaire
+  POST (protégé CSRF) au lieu d'un lien GET. Vérifié : ancienne URL GET → 403,
+  POST sans jeton → 403, POST avec jeton → suppression effective.
 
 ## ⚠️ Actions manuelles REQUISES (ops / hors code)
 
@@ -65,9 +68,6 @@ réaliser** (côté serveur / ops) et la suite de la professionnalisation.
 - **Composer + autoloading PSR-4** + namespaces (remplace les `require_once`
   manuels). Gros refactor (~30 fichiers) — prévoir une branche dédiée + tests.
 - **`.env` robuste** via `vlucas/phpdotenv` (dépend de Composer).
-- **GED `delete` en GET** : action destructive déclenchée en GET (donc hors
-  protection CSRF, qui ne couvre que POST). À passer en POST. *(IDOR fermé, mais
-  CSRF encore possible sur cette action précise.)*
 - **Logging** structuré (monolog) + page d'erreur générique en prod.
 - **En-têtes de sécurité** (CSP, X-Frame-Options, X-Content-Type-Options).
 - **Pagination** sur les listes + audit des index SQL (`tenant_id`,

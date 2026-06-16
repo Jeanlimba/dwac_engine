@@ -217,7 +217,17 @@ class Ged extends Controller {
         }
     }
 
-    public function delete($type, $id, $currentFolderId) {
+    public function delete() {
+        // Suppression réservée au POST : action destructive, donc protégée par
+        // le jeton CSRF (vérifié globalement par le front controller sur les POST).
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->denyAccess();
+        }
+
+        $type = $_POST['type'] ?? '';
+        $id = $_POST['id'] ?? null;
+        $currentFolderId = $_POST['current_folder_id'] ?? '';
+
         if ($type === 'folder') {
             $this->ownedFolderOrDeny($id);
             $this->gedFolderModel->deleteFolder($id);
@@ -232,6 +242,7 @@ class Ged extends Controller {
             }
         }
         header('Location: ' . URLROOT . '/ged/folder/' . $currentFolderId);
+        exit;
     }
 
     public function share() {
