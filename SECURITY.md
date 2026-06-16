@@ -69,6 +69,10 @@ réaliser** (côté serveur / ops) et la suite de la professionnalisation.
 - **Composer + autoloading PSR-4** + namespaces (remplace les `require_once`
   manuels). Gros refactor (~30 fichiers) — prévoir une branche dédiée + tests.
 - **`.env` robuste** via `vlucas/phpdotenv` (dépend de Composer).
+- **Actions destructives encore en GET** (CSRF-able) à passer en POST :
+  `Users::delete` / `Users::toggleStatus`, `Employees::delete`. (Même classe que
+  les actions GED déjà corrigées ; `Notifications::markAllRead/markAsRead` en
+  GET aussi mais bénin.)
 - **Logging** structuré (monolog) + page d'erreur générique en prod.
 - **En-têtes de sécurité** (CSP, X-Frame-Options, X-Content-Type-Options).
 - **Pagination** sur les listes + audit des index SQL (`tenant_id`,
