@@ -75,7 +75,10 @@ réaliser** (côté serveur / ops) et la suite de la professionnalisation.
   (marquer ses propres notifications comme lues) — à convertir si on veut être
   exhaustif.
 - **Logging** structuré (monolog) + page d'erreur générique en prod.
-- **En-têtes de sécurité** (CSP, X-Frame-Options, X-Content-Type-Options).
+- **En-têtes de sécurité** : `X-Frame-Options`, `X-Content-Type-Options`,
+  `Referrer-Policy` sont en place (dans `public/index.php`). Reste la **CSP** —
+  bloquée par le JS inline (`onclick`, `<script>` inline) ; à faire après avoir
+  externalisé/assaini ces scripts.
 - **Pagination** sur les listes + audit des index SQL (`tenant_id`,
   `employee_id`, `username`).
 - **Tests** (PHPUnit) sur l'auth, l'isolation tenant et la validation d'upload.

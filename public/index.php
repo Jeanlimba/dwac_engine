@@ -29,6 +29,18 @@ if ($isLocalEnv || $appDebug) {
 // Initialize Session
 init_session();
 
+/*
+ * En-têtes de sécurité HTTP (défense en profondeur, appliqués à toutes les
+ * réponses). NB : pas de Content-Security-Policy ici — l'interface utilise du
+ * JS inline (handlers onclick, scripts inline) qu'une CSP stricte casserait ;
+ * la CSP fera l'objet d'un chantier dédié et testé.
+ */
+if (!headers_sent()) {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+}
+
 // Define URLROOT dynamically
 $protocol = "http";
 if (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] === 'on' || $_SERVER['HTTPS'] === 1)) {
