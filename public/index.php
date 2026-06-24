@@ -41,6 +41,41 @@ if (!headers_sent()) {
     header('Referrer-Policy: strict-origin-when-cross-origin');
 }
 
+/*
+ * Gestion centralisée des erreurs non rattrapées (PRODUCTION uniquement).
+ * En dev, on laisse PHP afficher l'erreur (display_errors). En prod, on
+ * journalise et on affiche une page 500 générique (pas de fuite, pas de page
+ * blanche). En dev, ces handlers ne sont pas posés.
+ */
+if (!($isLocalEnv || $appDebug)) {
+    $renderError500 = function () {
+        if (!headers_sent()) {
+            http_response_code(500);
+        }
+        $page = dirname(__DIR__) . '/app/Views/errors/500.php';
+        if (is_file($page)) {
+            include $page;
+        } else {
+            echo 'Une erreur interne est survenue.';
+        }
+    };
+
+    set_exception_handler(function ($e) use ($renderError500) {
+        error_log('[evolution] Uncaught ' . get_class($e) . ': ' . $e->getMessage()
+            . ' @ ' . $e->getFile() . ':' . $e->getLine());
+        $renderError500();
+        exit;
+    });
+
+    register_shutdown_function(function () use ($renderError500) {
+        $err = error_get_last();
+        if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+            error_log('[evolution] Fatal: ' . $err['message'] . ' @ ' . $err['file'] . ':' . $err['line']);
+            $renderError500();
+        }
+    });
+}
+
 // Define URLROOT dynamically
 $protocol = "http";
 if (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] === 'on' || $_SERVER['HTTPS'] === 1)) {

@@ -74,7 +74,9 @@ réaliser** (côté serveur / ops) et la suite de la professionnalisation.
 - **`Notifications::markAllRead/markAsRead`** restent en GET mais sans enjeu
   (marquer ses propres notifications comme lues) — à convertir si on veut être
   exhaustif.
-- **Logging** structuré (monolog) + page d'erreur générique en prod.
+- **Logging / erreurs** : page **500 générique** + journalisation des exceptions
+  et erreurs fatales en place (prod uniquement, dans `public/index.php`). Reste
+  optionnel : un logger structuré (monolog) dédié.
 - **En-têtes de sécurité** : `X-Frame-Options`, `X-Content-Type-Options`,
   `Referrer-Policy` sont en place (dans `public/index.php`). Reste la **CSP** —
   bloquée par le JS inline (`onclick`, `<script>` inline) ; à faire après avoir
