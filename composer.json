@@ -1,0 +1,9 @@
+{
+    "description": "DWAC Engine (evolution) — dépendances. La lib ZKTeco n'est requise que sur le poste collecteur local (lecture pointeuse). L'app web en ligne n'en dépend pas.",
+    "require": {
+        "coding-libs/zkteco-php": "^0.0.35"
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

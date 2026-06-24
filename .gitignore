@@ -18,6 +18,10 @@ Desktop.ini
 .vscode/
 .idea/
 
+# Dépendances Composer (installées via `composer install`, requises seulement
+# sur le poste collecteur local). NE PAS committer.
+/vendor/
+
 # Dev/test helpers (locaux, non déployés)
 /router.php
 .claude/launch.json
