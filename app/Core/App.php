@@ -46,9 +46,12 @@ class App {
 
         // Protection CSRF globale : toute requête POST routée par un contrôleur
         // doit porter un jeton valide (champ POST csrf_token ou en-tête
-        // X-CSRF-Token pour l'AJAX). Exception : Externalged, dépôt PUBLIC
-        // protégé par un jeton d'URL et sans session utilisateur.
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $controllerName !== 'Externalged') {
+        // X-CSRF-Token pour l'AJAX). Exceptions : endpoints machine-à-machine
+        // sans session, qui ont leur propre authentification :
+        //  - Externalged : dépôt public protégé par un jeton d'URL ;
+        //  - Ingest : API d'ingestion de présence protégée par signature HMAC.
+        $csrfExempt = ['Externalged', 'Ingest'];
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && !in_array($controllerName, $csrfExempt, true)) {
             csrf_check_or_die();
         }
 

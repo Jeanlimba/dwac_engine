@@ -53,6 +53,58 @@ class Pointage {
         return $this->db->resultSet();
     }
 
+    /**
+     * Ingestion par lot des pointages envoyés par le collecteur local.
+     * Chaque enregistrement attendu : ['zk_id' => int, 'date_heure' => 'Y-m-d H:i:s', 'type' => int].
+     * La résolution zk_id -> employé est SCOPÉE au tenant (un collecteur ne peut
+     * écrire que pour son entreprise). La déduplication repose sur la contrainte
+     * UNIQUE(employe_id, date_heure) via INSERT IGNORE.
+     *
+     * @return array{inserted:int,skipped:int}
+     */
+    public function ingestBatch($tenantId, array $records) {
+        $inserted = 0;
+        $skipped = 0;
+
+        foreach ($records as $r) {
+            $zkId = $r['zk_id'] ?? null;
+            $dateHeure = $r['date_heure'] ?? null;
+            $type = (int) ($r['type'] ?? 0);
+
+            if (!$zkId || !$dateHeure) {
+                $skipped++;
+                continue;
+            }
+
+            // Employé correspondant, DANS le tenant ciblé uniquement.
+            $this->db->query("SELECT id FROM employees WHERE zk_id = :zk AND tenant_id = :tenant_id");
+            $this->db->bind(':zk', $zkId);
+            $this->db->bind(':tenant_id', $tenantId);
+            $employee = $this->db->single();
+
+            if (!$employee) {
+                $skipped++;
+                continue;
+            }
+
+            $this->db->query("INSERT IGNORE INTO pointages (employe_id, tenant_id, date_heure, type_pointage)
+                              VALUES (:employe_id, :tenant_id, :date_heure, :type_pointage)");
+            $this->db->bind(':employe_id', $employee->id);
+            $this->db->bind(':tenant_id', $tenantId);
+            $this->db->bind(':date_heure', $dateHeure);
+            $this->db->bind(':type_pointage', $type);
+            $this->db->execute();
+
+            if ($this->db->rowCount() > 0) {
+                $inserted++;
+            } else {
+                $skipped++; // doublon ignoré
+            }
+        }
+
+        return ['inserted' => $inserted, 'skipped' => $skipped];
+    }
+
     /** Détail des passages d'un employé pour un jour donné (tenant-scopé). */
     public function getDayDetail($tenantId, $employeeId, $date) {
         $this->db->query("SELECT p.*
