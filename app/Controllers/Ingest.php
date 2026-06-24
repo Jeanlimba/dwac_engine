@@ -1,21 +1,26 @@
 <?php
 
 /**
- * API d'ingestion de la présence (machine-à-machine).
+ * API d'ingestion / enrôlement de la présence (machine-à-machine).
  *
- * Reçoit en POST un lot de pointages envoyé par le collecteur local (qui lit la
- * pointeuse ZKTeco sur le LAN). Authentifiée par signature HMAC-SHA256 du corps
- * brut (pas de session) ; exemptée de la protection CSRF dans le front controller.
+ * Utilisée par le collecteur local (qui voit la pointeuse ZKTeco sur le LAN)
+ * pour échanger avec evolution en ligne sans accès MySQL distant. Toutes les
+ * routes sont authentifiées par signature HMAC-SHA256 du corps brut
+ * (en-tête X-Presence-Signature) contre PRESENCE_API_SECRET ; le contrôleur est
+ * exempté de la protection CSRF dans le front controller.
  *
- * Contrat :
- *   POST /ingest/pointages
- *   En-tête : X-Presence-Signature: hmac_sha256(body, PRESENCE_API_SECRET)
- *   Corps (JSON) : [ {"zk_id":1,"date_heure":"2026-06-24 08:01:00","type":0}, ... ]
- *   Réponse : {"inserted":N,"skipped":M}
+ * Routes (toutes en POST, corps JSON, réponse JSON) :
+ *   /ingest/pointages        : lot de pointages -> {inserted,skipped}
+ *   /ingest/pendingEmployees : employés sans zk_id -> {employees,max_zk_id}
+ *   /ingest/setZkId          : {employe_id, zk_id} -> {success}
  */
 class Ingest extends Controller {
 
-    public function pointages() {
+    /**
+     * Authentifie la requête (POST + signature HMAC) et renvoie [tenantId, body].
+     * Interrompt avec une réponse JSON d'erreur sinon.
+     */
+    private function authenticate() {
         header('Content-Type: application/json');
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -34,18 +39,9 @@ class Ingest extends Controller {
         $body = file_get_contents('php://input');
         $sent = $_SERVER['HTTP_X_PRESENCE_SIGNATURE'] ?? '';
         $expected = hash_hmac('sha256', $body, $secret);
-
-        // Comparaison à temps constant ; rejette si signature absente/invalide.
         if (!is_string($sent) || $sent === '' || !hash_equals($expected, $sent)) {
             http_response_code(401);
             echo json_encode(['error' => 'Signature invalide']);
-            exit;
-        }
-
-        $payload = json_decode($body, true);
-        if (!is_array($payload)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Corps JSON invalide']);
             exit;
         }
 
@@ -56,8 +52,59 @@ class Ingest extends Controller {
             exit;
         }
 
+        return [$tenantId, $body];
+    }
+
+    /** Réception d'un lot de pointages. */
+    public function pointages() {
+        [$tenantId, $body] = $this->authenticate();
+
+        $payload = json_decode($body, true);
+        if (!is_array($payload)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Corps JSON invalide']);
+            exit;
+        }
+
         $result = $this->model('Pointage')->ingestBatch($tenantId, $payload);
         echo json_encode($result);
+        exit;
+    }
+
+    /** Liste des employés du tenant non encore enrôlés + plus grand zk_id utilisé. */
+    public function pendingEmployees() {
+        [$tenantId] = $this->authenticate();
+
+        $employeeModel = $this->model('Employee');
+        echo json_encode([
+            'employees'  => $employeeModel->getWithoutZkIdByTenant($tenantId),
+            'max_zk_id'  => $employeeModel->getMaxZkIdByTenant($tenantId),
+        ]);
+        exit;
+    }
+
+    /** Persiste le zk_id attribué à un employé (après poussée sur la pointeuse). */
+    public function setZkId() {
+        [$tenantId, $body] = $this->authenticate();
+
+        $data = json_decode($body, true);
+        $employeId = isset($data['employe_id']) ? (int) $data['employe_id'] : 0;
+        $zkId = isset($data['zk_id']) ? (int) $data['zk_id'] : 0;
+
+        if ($employeId <= 0 || $zkId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'employe_id et zk_id requis']);
+            exit;
+        }
+
+        $ok = $this->model('Employee')->assignZkId($employeId, $tenantId, $zkId);
+        if (!$ok) {
+            http_response_code(409);
+            echo json_encode(['error' => 'Employé introuvable, hors tenant, ou déjà enrôlé']);
+            exit;
+        }
+
+        echo json_encode(['success' => true]);
         exit;
     }
 }

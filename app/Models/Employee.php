@@ -52,4 +52,40 @@ class Employee {
         $this->db->bind(':tenant_id', $tenant_id);
         return $this->db->execute();
     }
+
+    /* ---- Présence : enrôlement biométrique (zk_id) ---- */
+
+    /** Employés d'un tenant non encore enrôlés sur la pointeuse. */
+    public function getWithoutZkIdByTenant($tenant_id) {
+        $this->db->query("SELECT id, nom, prenom, matricule
+                          FROM employees
+                          WHERE tenant_id = :tenant_id AND (zk_id IS NULL OR zk_id = 0)
+                          ORDER BY nom ASC");
+        $this->db->bind(':tenant_id', $tenant_id);
+        return $this->db->resultSet();
+    }
+
+    /** Plus grand zk_id déjà attribué dans le tenant (pour calculer le suivant). */
+    public function getMaxZkIdByTenant($tenant_id) {
+        $this->db->query("SELECT COALESCE(MAX(zk_id), 0) AS max_id FROM employees WHERE tenant_id = :tenant_id");
+        $this->db->bind(':tenant_id', $tenant_id);
+        $row = $this->db->single();
+        return (int) ($row->max_id ?? 0);
+    }
+
+    /**
+     * Attribue un zk_id à un employé du tenant, uniquement s'il n'en a pas déjà
+     * (évite d'écraser un enrôlement existant). Renvoie true si la mise à jour
+     * a bien eu lieu.
+     */
+    public function assignZkId($id, $tenant_id, $zk_id) {
+        $this->db->query("UPDATE employees SET zk_id = :zk_id
+                          WHERE id = :id AND tenant_id = :tenant_id
+                            AND (zk_id IS NULL OR zk_id = 0)");
+        $this->db->bind(':zk_id', $zk_id);
+        $this->db->bind(':id', $id);
+        $this->db->bind(':tenant_id', $tenant_id);
+        $this->db->execute();
+        return $this->db->rowCount() > 0;
+    }
 }
