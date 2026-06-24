@@ -160,6 +160,11 @@ $user_photo = $_SESSION['user_photo'] ?? '';
                                     <a class="nav-link" href="<?= URLROOT ?>/departments">Affectations</a>
                                 </li>
                                 <?php endif; ?>
+                                <?php if (!$is_employee || (isset($_SESSION['user_role']) && in_array($_SESSION['user_role'], ['superviseur', 'manager']))): ?>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="<?= URLROOT ?>/attendance">Présence</a>
+                                </li>
+                                <?php endif; ?>
                                 <li class="nav-item">
                                     <a class="nav-link" href="<?= URLROOT ?>/ged">GED</a>
                                 </li>
