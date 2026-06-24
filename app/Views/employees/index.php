@@ -29,6 +29,7 @@
                             <th>Contact</th>
                             <th>Rôle</th>
                             <th>Statut</th>
+                            <th>Présence</th>
                             <th class="w-1">Actions</th>
                         </tr>
                     </thead>
@@ -73,6 +74,16 @@
                                         if($employee->statut == 'Congé') $status_class = 'bg-yellow';
                                     ?>
                                     <span class="status status-dot <?= $status_class ?>"></span> <?= htmlspecialchars($employee->statut) ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($employee->zk_id)): ?>
+                                        <span class="badge bg-success-lt" title="Enrôlé sur la pointeuse (ID machine <?= (int) $employee->zk_id ?>)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-fingerprint me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18.9 7a8 8 0 0 1 1.1 5v1a6 6 0 0 0 .8 3" /><path d="M8 11a4 4 0 0 1 8 0v1a10 10 0 0 0 2 6" /><path d="M12 11v2a14 14 0 0 0 2.5 8" /><path d="M8 15a18 18 0 0 0 1.8 6" /><path d="M4.9 19a22 22 0 0 1 -.9 -7v-1a8 8 0 0 1 12 -6.95" /></svg>
+                                            Enrôlé
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary-lt" title="Non enrôlé sur la pointeuse">Non enrôlé</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <div class="dropdown">
