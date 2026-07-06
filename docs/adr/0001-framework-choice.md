@@ -188,7 +188,11 @@ risque et coût maximaux.
 1. [x] Décision prise : **Django (Python) sur VPS**.
 2. [ ] Choisir/provisionner le **VPS** (specs, OS, base de données, Nginx+Gunicorn, HTTPS).
 3. [ ] Trancher **MySQL vs PostgreSQL** pour la cible Django.
-4. [ ] **PoC Django** : socle + `inspectdb` sur la base existante + Django admin + 1 module simple (ex. Départements), pour mesurer l'effort réel.
+4. [x] **PoC Django** (local, 2026-07-06) : Django 6 + PyMySQL branché sur la base
+   `evolution` ; `inspectdb` a généré **les 33 modèles** correspondant aux 33 tables
+   **sans aucun avertissement** (schéma propre, Django-compatible). La reprise du
+   schéma existant est donc quasi immédiate. *(PoC dans `C:\laragon\www\evolution_dj`,
+   hors dépôt PHP ; aucune écriture faite dans la base.)*
 5. [ ] Définir l'**ordre de portage** des modules et les jalons (l'app PHP reste en service jusqu'à parité).
 6. [ ] Mettre en place les **tests** dès le socle (préalable non négociable à la paie).
 7. [ ] Réécrire le **collecteur de présence** en Python (`pyzk`) + ingestion via DRF.
