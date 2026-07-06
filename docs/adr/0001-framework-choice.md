@@ -193,6 +193,10 @@ risque et coût maximaux.
    **sans aucun avertissement** (schéma propre, Django-compatible). La reprise du
    schéma existant est donc quasi immédiate. *(PoC dans `C:\laragon\www\evolution_dj`,
    hors dépôt PHP ; aucune écriture faite dans la base.)*
+   **Démo admin validée** : `django check` sans erreur sur les 33 modèles ;
+   Django admin affiche les vraies données (`/admin/core/employees/` → 200, 3
+   employés réels), les tables système Django isolées dans une SQLite jetable via
+   un routeur → **base `evolution` non modifiée** (aucune table `django_*`/`auth_*`).
 5. [ ] Définir l'**ordre de portage** des modules et les jalons (l'app PHP reste en service jusqu'à parité).
 6. [ ] Mettre en place les **tests** dès le socle (préalable non négociable à la paie).
 7. [ ] Réécrire le **collecteur de présence** en Python (`pyzk`) + ingestion via DRF.
