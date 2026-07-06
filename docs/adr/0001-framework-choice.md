@@ -31,6 +31,14 @@ cette migration AVANT de construire la paie.** Ne pas réécrire en big-bang : p
 module par module, construire les **nouveaux** modules (paie, RBAC, etc.)
 directement en Laravel, et retirer l'ancien code au fur et à mesure.
 
+**Nuance (Django) :** si **Python** est le langage que tu maîtrises/préfères pour
+maintenir l'app sur le long terme, **et** que tu acceptes de passer sur un **VPS**,
+alors **Django est un choix défendable** (au prix d'une réécriture complète, mais
+avec Django admin comme accélérateur). Sinon, Laravel reste recommandé car c'est un
+**portage** et non une **réécriture**. Le choix final dépend donc de deux facteurs :
+**(1) ton langage de prédilection à long terme, (2) ta disposition à changer
+d'hébergement.**
+
 ## Options considérées
 
 ### Option A — Garder le framework maison et l'étoffer
@@ -72,8 +80,36 @@ paie et les modules restants.
 Très solide, mais plus verbeux et à courbe plus raide pour une petite équipe.
 Laravel offre un meilleur ratio vélocité/effort ici. **Écartée** (au profit de B).
 
+### Option D — Django (Python)
+
+| Dimension | Évaluation |
+|-----------|------------|
+| Complexité | **Réécriture complète dans un autre langage** (pas de portage progressif) |
+| Coût | Le plus élevé (tout le code PHP est à refaire ; seule la DB/logique se transpose) |
+| Scalabilité (produit) | Élevée — ORM Django, migrations, **Django admin** (back-office auto = accélérateur ERP), DRF |
+| Familiarité équipe | **Inconnue** — dépend de la maîtrise Python vs PHP |
+| Risque migration | **Élevé** (réécriture + changement d'écosystème) |
+| Hébergement | **Mal supporté en mutualisé cPanel** → impose quasi un **VPS** |
+| Aptitude à la paie | Élevée (Python + `Decimal`, tests, PDF/Excel) |
+
+**Pour :** ORM et migrations excellents ; **Django admin** (interface d'admin
+générée = gros gain pour un ERP interne CRUD) ; langage Python si l'équipe y est
+plus productive ; écosystème data mature.
+**Contre :** ce n'est **pas une migration mais une réécriture** (langage différent →
+aucun code PHP réutilisable, pas de cohabitation « strangler » simple) ; **impose
+un VPS** (Django tourne mal/pas en mutualisé) ; courbe si l'équipe est surtout PHP ;
+risque et coût maximaux.
+
 ## Analyse des trade-offs
 
+- **Laravel vs Django : ce n'est pas symétrique.** L'app existe déjà **en PHP**.
+  Laravel = **portage progressif dans le même langage** (réutilise la base MySQL
+  telle quelle, cohabitation possible, tourne sur l'hébergement actuel). Django =
+  **réécriture dans un autre langage** (aucun code réutilisable, pas de cohabitation
+  simple) **+ quasi-obligation de VPS**. À périmètre égal, Django coûte et risque
+  nettement plus. Django ne se justifie que si **Python est clairement le langage
+  préféré/maîtrisé pour la maintenance à long terme** et qu'on accepte le passage
+  VPS — auquel cas **Django admin** est un vrai accélérateur pour un back-office ERP.
 - **Le point de bascule, c'est la paie.** Tant qu'on restait sur des modules CRUD,
   le framework maison tenait. La paie (règles, argent, tests, PDF, déclarations)
   change l'équation : la faire à la main est lent et risqué ; Laravel la rend
