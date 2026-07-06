@@ -1,6 +1,6 @@
 # ADR-0001 : Framework applicatif — garder le micro-framework maison ou migrer vers Laravel
 
-**Statut :** Proposé
+**Statut :** Accepté — **Django (Python)**, sur VPS
 **Date :** 2026-07-06
 **Décideurs :** Jean LIMBA (propriétaire produit / dev principal)
 
@@ -24,20 +24,21 @@ précis, génération PDF, exports, et une forte exigence de **tests** et de
 - **Mutualisé** → contrainte réelle sur les processus longs (workers de queue).
 - Le plus gros investissement futur (paie + modules restants) est **devant** nous.
 
-## Décision (proposée)
+## Décision (retenue)
 
-**Migrer vers Laravel, de façon progressive (pattern « strangler »), et réaliser
-cette migration AVANT de construire la paie.** Ne pas réécrire en big-bang : porter
-module par module, construire les **nouveaux** modules (paie, RBAC, etc.)
-directement en Laravel, et retirer l'ancien code au fur et à mesure.
+**Réécrire progressivement l'application en Django (Python), sur un VPS.**
 
-**Nuance (Django) :** si **Python** est le langage que tu maîtrises/préfères pour
-maintenir l'app sur le long terme, **et** que tu acceptes de passer sur un **VPS**,
-alors **Django est un choix défendable** (au prix d'une réécriture complète, mais
-avec Django admin comme accélérateur). Sinon, Laravel reste recommandé car c'est un
-**portage** et non une **réécriture**. Le choix final dépend donc de deux facteurs :
-**(1) ton langage de prédilection à long terme, (2) ta disposition à changer
-d'hébergement.**
+Les **deux conditions** qui justifient Django sont réunies : (1) **Python est le
+langage préféré** pour la maintenance long terme, et (2) le **passage sur VPS est
+accepté**. C'est un **choix assumé de réécriture** (pas un portage) : le code PHP
+n'est pas réutilisable, mais **le schéma de base et la logique métier se
+transposent**, et **Django admin** accélère fortement le back-office ERP. L'app PHP
+actuelle **reste en service** jusqu'à ce que la version Django atteigne la parité,
+module par module.
+
+> *Note : à contexte différent (préférence PHP ou maintien du mutualisé), la
+> recommandation aurait été Laravel — voir l'analyse ci-dessous, conservée comme
+> trace de décision.*
 
 ## Options considérées
 
@@ -143,19 +144,24 @@ risque et coût maximaux.
 - Le choix d'hébergement (mutualisé vs VPS) au moment d'attaquer la paie.
 - La stratégie multi-tenant (global scope Eloquent sur `tenant_id`, ou package dédié).
 
-## Stratégie de migration progressive (strangler)
+## Stratégie de réécriture (Django) — retenue
 
-1. **Socle** : nouveau projet Laravel pointant sur **la même base** ; modèles Eloquent
-   mappés sur les tables existantes (sans changer le schéma au départ) ; auth + layout
-   + multi-tenant (global scope sur `tenant_id`).
-2. **Migrations** : générer les migrations à partir du schéma actuel (référence), puis
-   tout nouveau changement passe par des migrations Laravel.
-3. **Nouveaux modules en Laravel natif** : paie, RBAC fin, etc.
-4. **Portage incrémental** des modules existants (employés, dépenses, présence, GED…),
-   en retirant l'ancien code module par module.
-5. **Cohabitation** : pendant la transition, router par module (Laravel sur les
-   routes migrées, legacy sur le reste) ou cutover propre par module.
-6. **Tests** dès le socle (surtout avant la paie).
+1. **VPS + socle** : provisionner un VPS (Python 3.x, Nginx + Gunicorn, base de
+   données, Certbot/HTTPS). Créer le projet Django et ses apps par domaine.
+2. **Reprise de la base** : pointer Django sur la base existante et générer les
+   modèles avec `inspectdb` (bootstrap), puis reprendre la main via les migrations
+   Django. *(Option à évaluer : passer MySQL → PostgreSQL, souvent recommandé avec
+   Django ; sinon garder MySQL.)*
+3. **Django admin** : l'activer immédiatement → back-office CRUD instantané sur les
+   entités reprises (gros gain rapide pour un ERP interne).
+4. **Multi-tenant** : filtrage par `tenant_id` (middleware + querysets/managers
+   scopés), ou package dédié.
+5. **Nouveaux modules en Django natif** : paie, RBAC (groupes/permissions Django), etc.
+6. **Portage incrémental** des modules existants ; l'app PHP **reste en ligne
+   jusqu'à parité** par module, puis bascule.
+7. **Présence** : réécrire le collecteur en **Python** (lib `pyzk` pour ZKTeco) et
+   exposer l'ingestion via **Django REST Framework** (remplace l'API PHP `/ingest`).
+8. **Tests** (pytest / tests Django) dès le socle — non négociable avant la paie.
 
 ## Estimation d'effort (ordre de grandeur, équipe très réduite)
 
@@ -179,12 +185,14 @@ risque et coût maximaux.
 
 ## Action items
 
-1. [ ] Valider/infirmer cette décision (Jean).
-2. [ ] Vérifier la compatibilité Laravel de l'hébergement actuel (PHP 8.x, SSH/Composer, docroot, cron) **ou** décider d'un petit VPS.
-3. [ ] PoC Laravel : socle + auth + 1 module simple (ex. Départements) branché sur la base existante, pour mesurer l'effort réel.
-4. [ ] Décider de l'ordre de portage des modules et des jalons.
-5. [ ] Mettre en place les tests dès le socle (préalable non négociable à la paie).
-6. [ ] Ne **pas** investir davantage dans un RBAC/outillage maison lourd d'ici la décision.
+1. [x] Décision prise : **Django (Python) sur VPS**.
+2. [ ] Choisir/provisionner le **VPS** (specs, OS, base de données, Nginx+Gunicorn, HTTPS).
+3. [ ] Trancher **MySQL vs PostgreSQL** pour la cible Django.
+4. [ ] **PoC Django** : socle + `inspectdb` sur la base existante + Django admin + 1 module simple (ex. Départements), pour mesurer l'effort réel.
+5. [ ] Définir l'**ordre de portage** des modules et les jalons (l'app PHP reste en service jusqu'à parité).
+6. [ ] Mettre en place les **tests** dès le socle (préalable non négociable à la paie).
+7. [ ] Réécrire le **collecteur de présence** en Python (`pyzk`) + ingestion via DRF.
+8. [ ] **Ne plus investir** dans l'app PHP au-delà des correctifs indispensables (le gros reste en service, pas de nouveaux gros modules côté PHP).
 
 ---
 *Voir `ERP_ROADMAP.md` (feuille de route ERP) et `SECURITY.md` (état sécurité).*
