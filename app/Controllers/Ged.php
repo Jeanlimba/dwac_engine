@@ -241,6 +241,7 @@ class Ged extends Controller {
                 $this->gedFileModel->deleteFile($id);
             }
         }
+        audit_log('ged.delete', $type . ' #' . $id);
         header('Location: ' . URLROOT . '/ged/folder/' . $currentFolderId);
         exit;
     }

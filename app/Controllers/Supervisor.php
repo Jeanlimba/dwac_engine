@@ -752,6 +752,7 @@ class Supervisor extends Controller {
             $this->notificationModel->notifyEmployee($employee_id, $tenant_id, "Dépense rejetée", "Votre dépense a été rejetée. Motif : $comment", 'danger', 'expenses');
         }
 
+        audit_log('expense.' . $action, 'Dépense #' . $id . ' (employé #' . $employee_id . ')');
         flash('supervisor_message', 'Action effectuée avec succès');
         header('Location: ' . URLROOT . '/supervisor/expenses');
         exit;

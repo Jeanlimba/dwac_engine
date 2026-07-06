@@ -118,6 +118,7 @@ class Timesheets extends Controller {
             $id = $_POST['id'];
             $rating = $_POST['rating'];
             $success = $this->timesheetModel->validate($id, $rating, $_SESSION['user_id'], $_SESSION['tenant_id']);
+            if ($success) audit_log('timesheet.validate', 'Feuille de temps #' . $id);
             echo json_encode(['success' => $success]);
             exit;
         }
@@ -129,6 +130,7 @@ class Timesheets extends Controller {
             $id = $_POST['id'];
             $reason = $_POST['rejection_reason'];
             $success = $this->timesheetModel->reject($id, $reason, $_SESSION['user_id'], $_SESSION['tenant_id']);
+            if ($success) audit_log('timesheet.reject', 'Feuille de temps #' . $id);
             echo json_encode(['success' => $success]);
             exit;
         }
