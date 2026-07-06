@@ -14,12 +14,14 @@ class Auth extends Controller {
             $loggedInUser = $this->userModel->login($username, $password);
 
             if ($loggedInUser === 'blocked') {
+                audit_log('login_failed', 'Compte bloqué : ' . $username);
                 $_SESSION['login_error'] = 'Votre compte est bloqué. Veuillez contacter l\'administrateur.';
                 $this->view('auth/login');
             } elseif ($loggedInUser) {
                 // Create Session
                 $this->createUserSession($loggedInUser);
             } else {
+                audit_log('login_failed', 'Identifiants incorrects : ' . $username);
                 $_SESSION['login_error'] = 'Identifiants incorrects';
                 $this->view('auth/login');
             }
@@ -40,6 +42,8 @@ class Auth extends Controller {
         $_SESSION['user_lastname'] = $user->nom ?? '';
         $_SESSION['user_photo'] = $user->photo ?? '';
 
+        audit_log('login'); // connexion réussie (session renseignée)
+
         // Assurer que l'espace GED existe
         if (!$_SESSION['is_super_admin']) {
             require_once '../app/Models/GedFolder.php';
@@ -56,6 +60,7 @@ class Auth extends Controller {
     }
 
     public function logout() {
+        audit_log('logout'); // avant de vider la session (user_id encore présent)
         unset($_SESSION['user_id']);
         unset($_SESSION['tenant_id']);
         unset($_SESSION['employee_id']);

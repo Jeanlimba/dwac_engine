@@ -65,6 +65,7 @@ class Employees extends Controller {
         }
 
         if ($this->employeeModel->deleteEmployee($id, $_SESSION['tenant_id'])) {
+            audit_log('employee.delete', 'Employé #' . $id);
             header('Location: ' . URLROOT . '/employees');
         } else {
             die('Une erreur est survenue.');

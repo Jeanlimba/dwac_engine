@@ -122,6 +122,9 @@ $user_photo = $_SESSION['user_photo'] ?? '';
                                 <li class="nav-item">
                                     <a class="nav-link" href="<?= URLROOT ?>/users">Utilisateurs</a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="<?= URLROOT ?>/auditlog">Audit</a>
+                                </li>
                             <?php else: ?>
                                 <li class="nav-item">
                                     <a class="nav-link" href="<?= URLROOT ?>/expenses">Mes Dépenses</a>
@@ -151,6 +154,7 @@ $user_photo = $_SESSION['user_photo'] ?? '';
                                     <div class="dropdown-menu">
                                         <a class="dropdown-item" href="<?= URLROOT ?>/settings/charges">Gestion des Charges</a>
                                         <a class="dropdown-item" href="<?= URLROOT ?>/users">Utilisateurs</a>
+                                        <a class="dropdown-item" href="<?= URLROOT ?>/auditlog">Journal d'audit</a>
                                     </div>
                                 </li>
                                 <li class="nav-item">

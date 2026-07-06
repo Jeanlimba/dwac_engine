@@ -47,6 +47,31 @@ function is_logged_in() {
 }
 
 /**
+ * Journal d'audit : enregistre une action sensible.
+ * Lit l'utilisateur/tenant courant en session et l'IP. TOUJOURS défensif :
+ * une erreur d'audit ne doit jamais interrompre l'action métier.
+ *
+ * @param string      $action  Code court de l'action (ex: 'login', 'user.delete').
+ * @param string|null $details Détail lisible (ex: cible, valeurs).
+ * @return void
+ */
+function audit_log($action, $details = null) {
+    try {
+        require_once APPROOT . '/Models/ActionLog.php';
+        $log = new ActionLog();
+        $log->record([
+            'user_id'    => $_SESSION['user_id'] ?? null,
+            'tenant_id'  => $_SESSION['tenant_id'] ?? null,
+            'action'     => $action,
+            'details'    => $details,
+            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+        ]);
+    } catch (\Throwable $e) {
+        error_log('[audit] échec journalisation: ' . $e->getMessage());
+    }
+}
+
+/**
  * Détermine si l'hôte HTTP correspond à un environnement local de développement.
  * Tolère un port (ex: "localhost:9911") et les TLD de dev usuels. Sert à la fois
  * à la sélection de la base et à l'affichage des erreurs — un hôte de production

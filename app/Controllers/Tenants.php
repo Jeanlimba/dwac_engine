@@ -27,6 +27,7 @@ class Tenants extends Controller {
             ];
 
             if ($this->tenantModel->create($data)) {
+                audit_log('tenant.create', 'Entreprise : ' . ($data['name'] ?? '?'));
                 header('Location: ' . URLROOT . '/tenants');
             } else {
                 die('Erreur lors de la création');
@@ -67,6 +68,7 @@ class Tenants extends Controller {
     public function delete($id) {
         $this->requirePost();
         if ($this->tenantModel->delete($id)) {
+            audit_log('tenant.delete', 'Entreprise #' . $id);
             header('Location: ' . URLROOT . '/tenants');
         } else {
             die('Erreur lors de la suppression');

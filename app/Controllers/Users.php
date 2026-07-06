@@ -43,6 +43,7 @@ class Users extends Controller {
             ];
 
             if ($this->userModel->create($data)) {
+                audit_log('user.create', 'Utilisateur : ' . ($data['username'] ?? '?'));
                 header('Location: ' . URLROOT . '/users');
             } else {
                 die('Erreur lors de la création');
@@ -115,6 +116,7 @@ class Users extends Controller {
         }
 
         if ($this->userModel->delete($id)) {
+            audit_log('user.delete', 'Utilisateur #' . $id . ' (' . ($user->username ?? '?') . ')');
             header('Location: ' . URLROOT . '/users');
         } else {
             die('Erreur lors de la suppression');
@@ -131,6 +133,7 @@ class Users extends Controller {
         }
 
         if ($this->userModel->toggleStatus($id)) {
+            audit_log('user.toggle_status', 'Utilisateur #' . $id . ' (' . ($user->username ?? '?') . ')');
             header('Location: ' . URLROOT . '/users');
         } else {
             die('Erreur lors du changement de statut');
