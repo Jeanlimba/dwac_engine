@@ -1,4 +1,17 @@
 <?php require APPROOT . '/Views/inc/header.php'; ?>
+<?php
+/*
+ * Droit de gestion RH de la fiche (ajout/modif contrat, expérience, etc.).
+ * $is_employee (défini dans header.php) est vrai dès qu'un compte possède un
+ * employee_id — ce qui masquait à tort les boutons pour les superviseurs et
+ * managers, qui EN ONT un. On aligne donc la visibilité sur la même règle que
+ * les endpoints AJAX : rôle admin/manager/superviseur (ou admin de tenant sans
+ * employee_id), et jamais le super-admin.
+ */
+$can_manage = empty($_SESSION['is_super_admin'])
+    && (empty($_SESSION['employee_id'])
+        || in_array($_SESSION['user_role'] ?? '', ['admin', 'manager', 'superviseur'], true));
+?>
 
 <div class="page-header d-print-none">
     <div class="container-xl">
@@ -15,7 +28,7 @@
                 <a href="<?= URLROOT ?>/employees" class="btn btn-white">
                     Retour à la liste
                 </a>
-                <?php if (!$is_employee): ?>
+                <?php if ($can_manage): ?>
                 <button onclick="loadEmployeeInfoForm(<?= $data['employee']->id ?>)" class="btn btn-primary">
                     Modifier
                 </button>
@@ -32,7 +45,7 @@
                 <div class="card">
                     <div class="card-body p-4 text-center">
                         <?php if(!empty($data['employee']->photo)): ?>
-                            <span class="avatar avatar-xl mb-3 avatar-rounded" style="background-image: url(<?= URLROOT . '/' . $data['employee']->photo ?>)"></span>
+                            <span class="avatar avatar-xl mb-3 avatar-rounded" style="background-image: url(<?= e(URLROOT . '/' . $data['employee']->photo) ?>)"></span>
                         <?php else: ?>
                             <span class="avatar avatar-xl mb-3 avatar-rounded"><?= substr($data['employee']->prenom, 0, 1) . substr($data['employee']->nom, 0, 1) ?></span>
                         <?php endif; ?>
@@ -43,11 +56,11 @@
                         </div>
                     </div>
                     <div class="d-flex">
-                        <a href="mailto:<?= $data['employee']->email ?>" class="card-btn">
+                        <a href="mailto:<?= e($data['employee']->email) ?>" class="card-btn">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-muted" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><rect x="3" y="5" width="18" height="14" rx="2" /><polyline points="3 7 12 13 21 7" /></svg>
                             Email
                         </a>
-                        <a href="tel:<?= $data['employee']->telephone_professionnel ?>" class="card-btn">
+                        <a href="tel:<?= e($data['employee']->telephone_professionnel) ?>" class="card-btn">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2 text-muted" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2" /></svg>
                             Appeler
                         </a>
@@ -101,7 +114,7 @@
                             <div class="tab-pane active show" id="tabs-info">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h3 class="card-title">Informations Personnelles</h3>
-                                    <?php if (!$is_employee): ?>
+                                    <?php if ($can_manage): ?>
                                     <button class="btn btn-sm btn-outline-primary" onclick="loadEmployeeInfoForm(<?= $data['employee']->id ?>)">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-inline" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a1.5 1.5 0 0 0 -4 -4l-10.5 10.5v4" /><line x1="13.5" y1="6.5" x2="17.5" y2="10.5" /></svg>
                                         Modifier
@@ -225,7 +238,7 @@
                             <div class="tab-pane" id="tabs-contracts">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h4>Historique des Contrats</h4>
-                                    <?php if (!$is_employee): ?>
+                                    <?php if ($can_manage): ?>
                                     <button class="btn btn-sm btn-primary" onclick="loadContractForm(<?= $data['employee']->id ?>)">Ajouter</button>
                                     <?php endif; ?>
                                 </div>
@@ -236,7 +249,7 @@
                             <div class="tab-pane" id="tabs-experiences">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h4>Expériences Professionnelles</h4>
-                                    <?php if (!$is_employee): ?>
+                                    <?php if ($can_manage): ?>
                                     <button class="btn btn-sm btn-primary" onclick="loadExperienceForm(<?= $data['employee']->id ?>)">Ajouter</button>
                                     <?php endif; ?>
                                 </div>
@@ -247,7 +260,7 @@
                             <div class="tab-pane" id="tabs-trainings">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h4>Formations & Certifications</h4>
-                                    <?php if (!$is_employee): ?>
+                                    <?php if ($can_manage): ?>
                                     <button class="btn btn-sm btn-primary" onclick="loadTrainingForm(<?= $data['employee']->id ?>)">Ajouter</button>
                                     <?php endif; ?>
                                 </div>
@@ -258,7 +271,7 @@
                             <div class="tab-pane" id="tabs-leaves">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h4>Demandes de Congés</h4>
-                                    <?php if (!$is_employee): ?>
+                                    <?php if ($can_manage): ?>
                                     <button class="btn btn-sm btn-primary" onclick="loadLeaveForm(<?= $data['employee']->id ?>)">Nouvelle demande</button>
                                     <?php endif; ?>
                                 </div>
