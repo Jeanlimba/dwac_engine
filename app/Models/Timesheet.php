@@ -97,8 +97,8 @@ class Timesheet {
                          FROM timesheets t 
                          JOIN employees e ON t.employee_id = e.id 
                          LEFT JOIN missions m ON t.mission_id = m.id 
-                         WHERE t.tenant_id = :tenant_id AND t.status = 'soumis' 
-                         ORDER BY t.date DESC, e.nom ASC");
+                         WHERE t.tenant_id = :tenant_id AND t.status = 'soumis'
+                         ORDER BY e.nom ASC, e.prenom ASC, t.date DESC");
         $this->db->bind(':tenant_id', $tenant_id);
         return $this->db->resultSet();
     }

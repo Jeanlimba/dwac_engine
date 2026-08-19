@@ -15,62 +15,94 @@
 
 <div class="page-body">
     <div class="container-xl">
+        <?php if (empty($data['pending'])): ?>
         <div class="card">
-            <?php if (empty($data['pending'])): ?>
             <div class="card-body text-center py-5">
                 <div class="text-muted">Aucune déclaration en attente de validation.</div>
             </div>
-            <?php else: ?>
-            <div class="table-responsive">
-                <table class="table table-vcenter card-table">
-                    <thead>
-                        <tr>
-                            <th>Employé</th>
-                            <th>Date</th>
-                            <th>Heures</th>
-                            <th>Activité</th>
-                            <th>Description</th>
-                            <th class="w-1">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach($data['pending'] as $entry): ?>
-                        <tr>
-                            <td>
-                                <div class="font-weight-medium"><?= htmlspecialchars($entry->prenom . ' ' . $entry->nom) ?></div>
-                            </td>
-                            <td><?= date('d/m/Y', strtotime($entry->date)) ?></td>
-                            <td>
-                                <span class="badge bg-blue-lt">
-                                    <?= substr($entry->start_time, 0, 5) ?> - <?= substr($entry->end_time, 0, 5) ?>
-                                </span>
-                            </td>
-                            <td>
-                                <?= htmlspecialchars($entry->category) ?>
-                                <?php if ($entry->category == 'Mission'): ?>
-                                    <br><small class="text-muted"><?= htmlspecialchars($entry->mission_title ?? $entry->custom_mission_name) ?></small>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <small><?= htmlspecialchars($entry->task_description) ?></small>
-                            </td>
-                            <td>
-                                <div class="btn-list flex-nowrap">
-                                    <button onclick="openValidateModal(<?= $entry->id ?>, '<?= htmlspecialchars($entry->prenom . ' ' . $entry->nom) ?>')" class="btn btn-sm btn-success">
-                                        Valider
-                                    </button>
-                                    <button onclick="openRejectModal(<?= $entry->id ?>)" class="btn btn-sm btn-outline-danger">
-                                        Rejeter
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <?php endif; ?>
         </div>
+        <?php else: ?>
+        <?php
+        // Regroupement des déclarations par employé pour une validation lisible.
+        $grouped = [];
+        foreach ($data['pending'] as $entry) {
+            $key = $entry->employee_id;
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = [
+                    'name'    => trim($entry->prenom . ' ' . $entry->nom),
+                    'prenom'  => $entry->prenom,
+                    'nom'     => $entry->nom,
+                    'entries' => [],
+                    'hours'   => 0.0,
+                ];
+            }
+            $grouped[$key]['entries'][] = $entry;
+            $grouped[$key]['hours'] += (strtotime($entry->end_time) - strtotime($entry->start_time)) / 3600;
+        }
+        ?>
+        <div class="row row-cards">
+            <?php foreach ($grouped as $group): ?>
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="avatar me-2"><?= e(mb_substr($group['prenom'] ?? '', 0, 1) . mb_substr($group['nom'] ?? '', 0, 1)) ?></span>
+                        <div>
+                            <h3 class="card-title mb-0"><?= e($group['name']) ?></h3>
+                            <div class="text-muted small"><?= count($group['entries']) ?> déclaration(s) en attente</div>
+                        </div>
+                        <div class="ms-auto">
+                            <span class="badge bg-blue-lt"><?= number_format($group['hours'], 1, ',', ' ') ?> h à valider</span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Heures</th>
+                                    <th>Activité</th>
+                                    <th>Description</th>
+                                    <th class="w-1">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($group['entries'] as $entry): ?>
+                                <tr>
+                                    <td><?= date('d/m/Y', strtotime($entry->date)) ?></td>
+                                    <td>
+                                        <span class="badge bg-blue-lt">
+                                            <?= substr($entry->start_time, 0, 5) ?> - <?= substr($entry->end_time, 0, 5) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?= e($entry->category) ?>
+                                        <?php if ($entry->category == 'Mission'): ?>
+                                            <br><small class="text-muted"><?= e($entry->mission_title ?? ($entry->custom_mission_name ?? '')) ?></small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <small><?= e($entry->task_description) ?></small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-list flex-nowrap">
+                                            <button onclick="openValidateModal(<?= $entry->id ?>, '<?= e(addslashes($group['name'])) ?>')" class="btn btn-sm btn-success">
+                                                Valider
+                                            </button>
+                                            <button onclick="openRejectModal(<?= $entry->id ?>)" class="btn btn-sm btn-outline-danger">
+                                                Rejeter
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
