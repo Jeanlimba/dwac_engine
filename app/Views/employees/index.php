@@ -39,19 +39,19 @@
                                 <td>
                                     <div class="d-flex py-1 align-items-center">
                                         <?php if(!empty($employee->photo)): ?>
-                                            <span class="avatar me-2" style="background-image: url(<?= URLROOT . '/' . $employee->photo ?>)"></span>
+                                            <span class="avatar me-2" style="background-image: url(<?= e(URLROOT . '/' . $employee->photo) ?>)"></span>
                                         <?php else: ?>
                                             <span class="avatar me-2"><?= substr($employee->prenom, 0, 1) . substr($employee->nom, 0, 1) ?></span>
                                         <?php endif; ?>
                                         <div class="flex-fill">
                                             <div class="font-weight-medium"><?= htmlspecialchars($employee->prenom . ' ' . $employee->nom) ?></div>
-                                            <div class="text-muted"><small>Matricule: <?= htmlspecialchars($employee->matricule) ?></small></div>
+                                            <div class="text-muted"><small>Matricule: <?= e($employee->matricule) ?></small></div>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <div><?= htmlspecialchars($employee->email) ?></div>
-                                    <div class="text-muted"><small><?= htmlspecialchars($employee->telephone_professionnel) ?></small></div>
+                                    <div><?= e($employee->email) ?></div>
+                                    <div class="text-muted"><small><?= e($employee->telephone_professionnel) ?></small></div>
                                 </td>
                                 <td>
                                     <?php 
@@ -128,6 +128,9 @@
 </div>
 
 <script>
+// Alias : certains boutons (Modifier) appellent loadEmployeeForm(id).
+function loadEmployeeForm(employeeId) { return loadEmployeeInfoForm(employeeId); }
+
 function loadEmployeeInfoForm(employeeId = null) {
     const modalElement = document.getElementById('modal-ajax');
     const modalContent = document.getElementById('modal-ajax-content');
