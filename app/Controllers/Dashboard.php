@@ -31,28 +31,63 @@ class Dashboard extends Controller {
             $this->view('dashboard/superadmin', $data);
         } else {
             $data['notifications'] = $this->notificationModel->getUnreadByUser($_SESSION['user_id']);
-            $is_privileged = isset($_SESSION['user_role']) && ($_SESSION['user_role'] === 'superviseur' || $_SESSION['user_role'] === 'manager');
+            // Encadrement (dashboard gestionnaire) : admin de tenant (sans
+            // employee_id) OU rôle admin/manager/superviseur. Un employé simple
+            // voit le dashboard personnel.
+            $is_privileged = empty($_SESSION['employee_id'])
+                || in_array($_SESSION['user_role'] ?? '', ['admin', 'manager', 'superviseur'], true);
             $tenant_id = $_SESSION['tenant_id'];
 
             if ($is_privileged) {
                 // Admin Tenant / Manager / Supervisor View
+                // Synthèse Timesheet de la semaine courante (lundi -> dimanche).
+                $weekStart = date('Y-m-d', strtotime('monday this week'));
+                $weekEnd   = date('Y-m-d', strtotime('sunday this week'));
+                $tsModel = $this->model('Timesheet');
+                $pending = $tsModel->getPendingByTenant($tenant_id);
+                $performance = $tsModel->getTenantPerformance($tenant_id, $weekStart, $weekEnd);
+                $weekHours = 0.0;
+                foreach ($performance as $p) { $weekHours += (float) $p->total_hours; }
+
                 $data['stats'] = [
-                    'employees_count' => $this->employeeModel->countEmployees($tenant_id),
-                    'missions_count' => $this->missionModel->countMissions($tenant_id),
+                    'employees_count'       => $this->employeeModel->countEmployees($tenant_id),
+                    'missions_count'        => $this->missionModel->countMissions($tenant_id),
                     'active_missions_count' => $this->missionModel->countActiveMissions($tenant_id),
-                    'pending_expenses_count' => $this->expenseModel->countPendingExpenses($tenant_id),
-                    'total_expenses' => $this->expenseModel->getTotalApprovedAmount($tenant_id),
-                    'partners_count' => $this->partnerModel->countPartners($tenant_id)
+                    'ts_pending_count'      => count($pending),
+                    'ts_week_hours'         => $weekHours,
                 ];
+                $data['mission_status'] = $this->missionModel->getStatusBreakdown($tenant_id);
+                $data['ts_performance']  = $performance;
+                $data['ts_detailed']     = $tsModel->getDetailedReport($tenant_id, $weekStart, $weekEnd);
+                $data['week_start']      = $weekStart;
+                $data['week_end']        = $weekEnd;
                 $this->view('dashboard/index', $data);
             } else {
-                // Standard Employee View
+                // Vue employé : synthèse de SA feuille de temps de la semaine.
                 $employee_id = $_SESSION['employee_id'];
+                $weekStart = date('Y-m-d', strtotime('monday this week'));
+                $weekEnd   = date('Y-m-d', strtotime('sunday this week'));
+                $tsModel = $this->model('Timesheet');
+                $weekEntries = $tsModel->getByEmployeeAndWeek($employee_id, $weekStart, $weekEnd);
+
+                $weekHours = 0.0; $pendingCount = 0;
+                foreach ($weekEntries as $en) {
+                    $weekHours += (strtotime($en->end_time) - strtotime($en->start_time)) / 3600;
+                    if (($en->status ?? '') === 'soumis') $pendingCount++;
+                }
+
                 $data['stats'] = [
-                    'pending_expenses' => $this->expenseModel->countEmployeePendingExpenses($employee_id),
-                    'approved_expenses_amount' => $this->expenseModel->getEmployeeTotalApprovedAmount($employee_id),
-                    'recent_expenses' => $this->expenseModel->getEmployeeExpenses($employee_id)
+                    'ts_week_hours' => $weekHours,
+                    'ts_pending'    => $pendingCount,
                 ];
+                // Saisies de l'année en cours pour la mini-grille annuelle.
+                $year = (int) date('Y');
+                $data['year']         = $year;
+                $data['year_entries'] = $tsModel->getByEmployeeAndWeek($employee_id, "$year-01-01", "$year-12-31");
+
+                $data['week_entries'] = $weekEntries;
+                $data['week_start']   = $weekStart;
+                $data['week_end']     = $weekEnd;
                 $this->view('dashboard/employee', $data);
             }
         }

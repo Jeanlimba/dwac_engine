@@ -100,6 +100,19 @@ $days_fr = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
         font-weight: 800;
         color: #1e293b;
     }
+
+    /* Vue Année : grille de contribution (façon GitHub) */
+    .ts-year-scroll { overflow-x: auto; padding-bottom: 6px; }
+    .ts-year-months { display: flex; gap: 3px; margin-bottom: 4px; }
+    .ts-year-months .ym { width: 13px; flex: 0 0 13px; font-size: 9px; color: #57606a; white-space: nowrap; overflow: visible; }
+    .ts-year-grid { display: flex; gap: 3px; }
+    .ts-year-col { display: flex; flex-direction: column; gap: 3px; }
+    .yc { width: 13px; height: 13px; flex: 0 0 13px; border-radius: 2px; background: #ebedf0; display: block; }
+    .yc.empty { background: transparent; }
+    .yc.l1 { background: #9be9a8; } .yc.l2 { background: #40c463; }
+    .yc.l3 { background: #30a14e; } .yc.l4 { background: #216e39; }
+    .ts-year-legend { font-size: .72rem; color: #57606a; display: flex; align-items: center; gap: 3px; }
+    .ts-year-legend .yc { width: 12px; height: 12px; }
 </style>
 
 <div class="page-header d-print-none">
@@ -111,6 +124,8 @@ $days_fr = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
                         Détails du <?= date('d/m/Y', strtotime($data['selected_date'])) ?>
                     <?php elseif($data['view'] == 'week'): ?>
                         Semaine <?= $data['start_date']->format('W') ?> (<?= $months_fr[$data['start_date']->format('F')] ?>)
+                    <?php elseif($data['view'] == 'year'): ?>
+                        Année <?= $data['start_date']->format('Y') ?>
                     <?php else: ?>
                         <?= $months_fr[$data['start_date']->format('F')] ?> <?= $data['start_date']->format('Y') ?>
                     <?php endif; ?>
@@ -118,13 +133,12 @@ $days_fr = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
             </div>
             <div class="col-auto ms-auto">
                 <div class="btn-list">
-                    <?php if($data['view'] != 'month'): ?>
-                        <a href="?view=<?= $data['view'] == 'day' ? 'week' : 'month' ?>&offset=<?= $data['offset'] ?>&date=<?= $data['selected_date'] ?>" class="btn btn-outline-secondary btn-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 11l-4 4l4 4m-4 -4h11a4 4 0 0 0 0 -8h-1" /></svg>
-                            Retour
-                        </a>
-                    <?php endif; ?>
-                    
+                    <div class="btn-group">
+                        <?php foreach (['day' => 'Jour', 'week' => 'Semaine', 'month' => 'Mois', 'year' => 'Année'] as $v => $lbl): ?>
+                            <a href="?view=<?= $v ?>&date=<?= e($data['selected_date']) ?>" class="btn btn-sm <?= $data['view'] === $v ? 'btn-primary' : 'btn-outline-primary' ?>"><?= $lbl ?></a>
+                        <?php endforeach; ?>
+                    </div>
+
                     <div class="btn-group">
                         <a href="?view=<?= $data['view'] ?>&offset=<?= $data['offset'] - 1 ?>&date=<?= $data['selected_date'] ?>" class="btn btn-outline-primary btn-sm btn-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="15 6 9 12 15 18" /></svg>
@@ -248,7 +262,7 @@ $days_fr = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
                                         </td>
                                         <td>
                                             <div class="btn-list flex-nowrap">
-                                                <button onclick='editEntry(<?= json_encode($entry) ?>)' class="btn btn-icon btn-sm"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" /><path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" /><line x1="16" y1="5" x2="19" y2="8" /></svg></button>
+                                                <button onclick='editEntry(<?= htmlspecialchars(json_encode($entry), ENT_QUOTES, "UTF-8") ?>)' class="btn btn-icon btn-sm"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" /><path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" /><line x1="16" y1="5" x2="19" y2="8" /></svg></button>
                                                 <button onclick="deleteEntry(<?= $entry->id ?>)" class="btn btn-icon btn-sm text-danger"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="4" y1="7" x2="20" y2="7" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg></button>
                                             </div>
                                         </td>
@@ -258,6 +272,67 @@ $days_fr = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+        <?php elseif($data['view'] == 'year'): ?>
+            <?php
+            $yhours = [];
+            foreach ($data['entries'] as $e) {
+                $dur = (strtotime($e->end_time) - strtotime($e->start_time)) / 3600;
+                $yhours[$e->date] = ($yhours[$e->date] ?? 0) + $dur;
+            }
+            $ylevel = function ($h) {
+                if ($h <= 0) return 0; if ($h < 2) return 1; if ($h < 4) return 2; if ($h < 6) return 3; return 4;
+            };
+            $yStart = clone $data['start_date'];                 // 1er janvier
+            $yEnd   = clone $data['end_date'];                   // 31 décembre
+            $gridStart = clone $yStart; $gridStart->modify('monday this week');
+            $gridEnd   = clone $yEnd;   $gridEnd->modify('sunday this week');
+            $totalYear = array_sum($yhours);
+            $cols = [];
+            $cur = clone $gridStart;
+            while ($cur <= $gridEnd) {
+                $col = ['month' => null, 'cells' => []];
+                for ($i = 0; $i < 7; $i++) {
+                    $inYear = ($cur >= $yStart && $cur <= $yEnd);
+                    $ds = $cur->format('Y-m-d');
+                    $h  = $inYear ? ($yhours[$ds] ?? 0) : null;
+                    $col['cells'][] = ['in' => $inYear, 'h' => $h, 'date' => $ds, 'lvl' => $inYear ? $ylevel($h) : 0];
+                    if ($inYear && $cur->format('j') === '1') { $col['month'] = mb_substr($months_fr[$cur->format('F')], 0, 3); }
+                    $cur->modify('+1 day');
+                }
+                $cols[] = $col;
+            }
+            ?>
+            <div class="gh-container">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div class="text-muted small">Total de l'année : <strong><?= number_format($totalYear, 0, ',', ' ') ?> h</strong></div>
+                    <div class="ts-year-legend">Moins
+                        <span class="yc"></span><span class="yc l1"></span><span class="yc l2"></span><span class="yc l3"></span><span class="yc l4"></span>
+                        Plus
+                    </div>
+                </div>
+                <div class="ts-year-scroll">
+                    <div class="ts-year-months">
+                        <?php foreach ($cols as $c): ?>
+                            <div class="ym"><?= $c['month'] ?? '' ?></div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="ts-year-grid">
+                        <?php foreach ($cols as $c): ?>
+                            <div class="ts-year-col">
+                                <?php foreach ($c['cells'] as $cell): ?>
+                                    <?php if (!$cell['in']): ?>
+                                        <span class="yc empty"></span>
+                                    <?php else: ?>
+                                        <a class="yc<?= $cell['lvl'] ? ' l' . $cell['lvl'] : '' ?>" href="?view=day&date=<?= $cell['date'] ?>" title="<?= number_format((float) $cell['h'], 1) ?> h — <?= date('d/m/Y', strtotime($cell['date'])) ?>"></a>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <div class="text-center mt-3 text-muted small">Cliquez sur un jour pour ouvrir sa vue détaillée.</div>
             </div>
         <?php endif; ?>
 

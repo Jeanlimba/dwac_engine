@@ -32,6 +32,13 @@ class Mission {
         return $row->total;
     }
 
+    /** Répartition des missions par statut du tenant (graphe dashboard). */
+    public function getStatusBreakdown($tenant_id) {
+        $this->db->query("SELECT status, COUNT(*) AS total FROM missions WHERE tenant_id = :tenant_id GROUP BY status ORDER BY total DESC");
+        $this->db->bind(':tenant_id', $tenant_id);
+        return $this->db->resultSet();
+    }
+
     public function createMission($data) {
         // Génération du code automatique (xxxxx/MM-YY)
         $month = date('m');
@@ -257,9 +264,16 @@ class Mission {
     }
 
     public function addBudgetDetailLine($data) {
-        $this->db->query("INSERT INTO mission_budget_detail_lines (main_line_id, code, label, unit, quantity, unit_price, amount) 
-                         VALUES (:main_line_id, :code, :label, :unit, :quantity, :unit_price, :amount)");
-        $this->db->bind(':main_line_id', $data['main_line_id']);
+        // Anti-IDOR inter-tenant : on n'insère QUE si le main_line ciblé
+        // appartient bien à la mission (déjà vérifiée côté tenant par le
+        // contrôleur). Sinon 0 ligne insérée.
+        $this->db->query("INSERT INTO mission_budget_detail_lines (main_line_id, code, label, unit, quantity, unit_price, amount)
+                         SELECT :ml_val, :code, :label, :unit, :quantity, :unit_price, :amount
+                         FROM mission_budget_main_lines
+                         WHERE id = :ml_chk AND mission_id = :mission_id");
+        $this->db->bind(':ml_val', $data['main_line_id']);
+        $this->db->bind(':ml_chk', $data['main_line_id']);
+        $this->db->bind(':mission_id', $data['mission_id']);
         $this->db->bind(':code', $data['code']);
         $this->db->bind(':label', $data['label']);
         $this->db->bind(':unit', $data['unit'] ?? null);
@@ -270,8 +284,12 @@ class Mission {
     }
 
     public function updateBudgetDetailLine($data) {
-        $this->db->query("UPDATE mission_budget_detail_lines SET code = :code, label = :label, unit = :unit, quantity = :quantity, unit_price = :unit_price, amount = :amount 
-                         WHERE id = :id");
+        // Scopé à la mission via le main_line parent (anti-IDOR inter-tenant).
+        $this->db->query("UPDATE mission_budget_detail_lines dl
+                         JOIN mission_budget_main_lines ml ON dl.main_line_id = ml.id
+                         SET dl.code = :code, dl.label = :label, dl.unit = :unit,
+                             dl.quantity = :quantity, dl.unit_price = :unit_price, dl.amount = :amount
+                         WHERE dl.id = :id AND ml.mission_id = :mission_id");
         $this->db->bind(':code', $data['code']);
         $this->db->bind(':label', $data['label']);
         $this->db->bind(':unit', $data['unit'] ?? null);
@@ -279,6 +297,7 @@ class Mission {
         $this->db->bind(':unit_price', $data['unit_price'] ?? 0);
         $this->db->bind(':amount', $data['amount']);
         $this->db->bind(':id', $data['id']);
+        $this->db->bind(':mission_id', $data['mission_id']);
         return $this->db->execute();
     }
 
@@ -289,9 +308,13 @@ class Mission {
         return $this->db->execute();
     }
 
-    public function deleteBudgetDetailLine($id) {
-        $this->db->query("DELETE FROM mission_budget_detail_lines WHERE id = :id");
+    public function deleteBudgetDetailLine($id, $mission_id) {
+        // Scopé à la mission via le main_line parent (anti-IDOR inter-tenant).
+        $this->db->query("DELETE dl FROM mission_budget_detail_lines dl
+                         JOIN mission_budget_main_lines ml ON dl.main_line_id = ml.id
+                         WHERE dl.id = :id AND ml.mission_id = :mission_id");
         $this->db->bind(':id', $id);
+        $this->db->bind(':mission_id', $mission_id);
         return $this->db->execute();
     }
 

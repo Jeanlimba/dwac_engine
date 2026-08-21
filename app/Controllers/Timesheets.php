@@ -18,22 +18,41 @@ class Timesheets extends Controller {
         }
 
         $view = $_GET['view'] ?? 'week';
+        if (!in_array($view, ['day', 'week', 'month', 'year'], true)) $view = 'week';
         $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
         $selected_date = $_GET['date'] ?? date('Y-m-d');
 
-        $monday = new DateTime();
-        $monday->setISODate((int)$monday->format('o'), (int)$monday->format('W') + ($view == 'week' ? $offset : 0));
-        
-        if ($view == 'month') {
-            $start_date = new DateTime('first day of this month');
-            if ($offset != 0) $start_date->modify("$offset months");
-            $end_date = clone $start_date;
-            $end_date->modify('last day of this month');
-        } else {
-            $start_date = clone $monday;
-            $end_date = clone $monday;
-            $end_date->modify('+6 days');
+        // Ancre = date sélectionnée ; l'offset décale par unité de la vue.
+        $base = new DateTime($selected_date);
+
+        switch ($view) {
+            case 'day':
+                if ($offset) $base->modify("$offset days");
+                $start_date = clone $base;
+                $end_date   = clone $base;
+                break;
+            case 'month':
+                $start_date = new DateTime($base->format('Y-m-01'));
+                if ($offset) $start_date->modify("$offset months");
+                $end_date = clone $start_date;
+                $end_date->modify('last day of this month');
+                break;
+            case 'year':
+                $year = (int) $base->format('Y') + $offset;
+                $start_date = new DateTime("$year-01-01");
+                $end_date   = new DateTime("$year-12-31");
+                break;
+            case 'week':
+            default:
+                $start_date = clone $base;
+                $start_date->modify('monday this week');
+                if ($offset) $start_date->modify("$offset weeks");
+                $end_date = clone $start_date;
+                $end_date->modify('+6 days');
+                break;
         }
+        // La date "ancre" reflète la période affichée (cohérence du sélecteur de vue).
+        $selected_date = $start_date->format('Y-m-d');
 
         // Fetch entries for the range
         $entries = $this->timesheetModel->getByEmployeeAndWeek(
@@ -78,6 +97,13 @@ class Timesheets extends Controller {
             ];
 
             if ($id) {
+                // Anti-IDOR intra-tenant : l'entrée doit appartenir à l'employé courant.
+                $existing = $this->timesheetModel->getById($id, $_SESSION['tenant_id']);
+                if (!$existing || $existing->employee_id != $_SESSION['employee_id']) {
+                    http_response_code(403);
+                    echo json_encode(['success' => false, 'message' => 'Accès refusé.']);
+                    exit;
+                }
                 $success = $this->timesheetModel->update($id, $data);
             } else {
                 $success = $this->timesheetModel->add($data);
@@ -91,6 +117,13 @@ class Timesheets extends Controller {
     public function delete($id) {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             header('Content-Type: application/json');
+            // Anti-IDOR intra-tenant : l'entrée doit appartenir à l'employé courant.
+            $existing = $this->timesheetModel->getById($id, $_SESSION['tenant_id']);
+            if (!$existing || $existing->employee_id != $_SESSION['employee_id']) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Accès refusé.']);
+                exit;
+            }
             $success = $this->timesheetModel->delete($id, $_SESSION['tenant_id']);
             echo json_encode(['success' => $success]);
             exit;
