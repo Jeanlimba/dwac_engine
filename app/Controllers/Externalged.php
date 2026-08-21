@@ -229,7 +229,10 @@ class Externalged extends Controller {
             }
             echo json_encode(['success' => false, 'message' => 'Méthode non autorisée.']);
         } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Erreur PHP : ' . $e->getMessage()]);
+            // Ne pas divulguer le détail de l'exception sur cet endpoint PUBLIC :
+            // on journalise côté serveur et on renvoie un message générique.
+            error_log('[externalged.upload] ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => "Une erreur est survenue lors de l'import."]);
         }
         exit;
     }

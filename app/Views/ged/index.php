@@ -88,7 +88,7 @@ function formatSize($bytes) {
                         <span class="input-icon-addon">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="10" cy="10" r="7" /><line x1="21" y1="21" x2="15" y2="15" /></svg>
                         </span>
-                        <input type="text" name="q" class="form-control" placeholder="Rechercher..." value="<?= $data['search_term'] ?? '' ?>">
+                        <input type="text" name="q" class="form-control" placeholder="Rechercher..." value="<?= e($data['search_term'] ?? '') ?>">
                     </div>
                 </form>
             </div>
@@ -135,11 +135,31 @@ function formatSize($bytes) {
 
 <div class="page-body">
     <div class="container-xl">
+        <?php if (!empty($_SESSION['ged_flash_success'])): ?>
+            <div class="alert alert-success alert-dismissible" role="alert">
+                <?= e($_SESSION['ged_flash_success']) ?>
+                <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+            </div>
+            <?php unset($_SESSION['ged_flash_success']); ?>
+        <?php endif; ?>
+        <?php if (!empty($_SESSION['ged_flash_errors'])): ?>
+            <div class="alert alert-warning alert-dismissible" role="alert">
+                <div class="fw-bold mb-1">Certains fichiers n'ont pas été importés :</div>
+                <ul class="mb-0 ps-3">
+                    <?php foreach ($_SESSION['ged_flash_errors'] as $__e): ?>
+                        <li><?= e($__e) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+                <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+            </div>
+            <?php unset($_SESSION['ged_flash_errors']); ?>
+        <?php endif; ?>
+
         <!-- Breadcrumbs -->
         <ol class="breadcrumb mb-3" aria-label="breadcrumbs">
             <?php foreach ($data['breadcrumbs'] as $index => $crumb): ?>
                 <li class="breadcrumb-item <?= ($index === count($data['breadcrumbs']) - 1) ? 'active' : '' ?>">
-                    <a href="<?= URLROOT ?>/ged/folder/<?= $crumb->id ?>"><?= $crumb->name ?></a>
+                    <a href="<?= URLROOT ?>/ged/folder/<?= (int) $crumb->id ?>"><?= e($crumb->name) ?></a>
                 </li>
             <?php endforeach; ?>
         </ol>
@@ -181,13 +201,13 @@ function formatSize($bytes) {
                             </a>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <?php if ($folder->is_mission == 0): ?>
-                                    <a class="dropdown-item rename-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= $folder->name ?>" data-type="folder" onclick="event.stopPropagation();">Renommer</a>
-                                    <a class="dropdown-item move-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= $folder->name ?>" data-type="folder" onclick="event.stopPropagation();">Déplacer</a>
-                                    <a class="dropdown-item copy-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= $folder->name ?>" data-type="folder" onclick="event.stopPropagation();">Copier</a>
-                                    <a class="dropdown-item share-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= $folder->name ?>" data-type="folder" onclick="event.stopPropagation();">Partager en interne</a>
-                                    <a class="dropdown-item external-link-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= $folder->name ?>" onclick="event.stopPropagation();">Lien de dépôt client</a>
+                                    <a class="dropdown-item rename-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= e($folder->name) ?>" data-type="folder" onclick="event.stopPropagation();">Renommer</a>
+                                    <a class="dropdown-item move-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= e($folder->name) ?>" data-type="folder" onclick="event.stopPropagation();">Déplacer</a>
+                                    <a class="dropdown-item copy-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= e($folder->name) ?>" data-type="folder" onclick="event.stopPropagation();">Copier</a>
+                                    <a class="dropdown-item share-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= e($folder->name) ?>" data-type="folder" onclick="event.stopPropagation();">Partager en interne</a>
+                                    <a class="dropdown-item external-link-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= e($folder->name) ?>" onclick="event.stopPropagation();">Lien de dépôt client</a>
                                     <?php if ($folder->share_count > 0): ?>
-                                        <a class="dropdown-item manage-access-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= $folder->name ?>" data-type="folder" onclick="event.stopPropagation();">Gérer les accès</a>
+                                        <a class="dropdown-item manage-access-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= e($folder->name) ?>" data-type="folder" onclick="event.stopPropagation();">Gérer les accès</a>
                                     <?php endif; ?>
                                     <div class="dropdown-divider"></div>
                                     <form method="POST" action="<?= URLROOT ?>/ged/delete" class="m-0" onsubmit="event.stopPropagation(); return confirm('Supprimer ce dossier et tout son contenu ?');">
@@ -197,17 +217,17 @@ function formatSize($bytes) {
                                         <button type="submit" class="dropdown-item text-danger">Supprimer</button>
                                     </form>
                                 <?php else: ?>
-                                    <a class="dropdown-item external-link-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= $folder->name ?>" onclick="event.stopPropagation();">Lien de partage (Dépôt)</a>
+                                    <a class="dropdown-item external-link-item" href="#" data-id="<?= $folder->id ?>" data-name="<?= e($folder->name) ?>" onclick="event.stopPropagation();">Lien de partage (Dépôt)</a>
                                 <?php endif; ?>
                             </div>
                         </div>
                         <div class="ged-item-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon <?= $folder->is_mission > 0 ? 'text-purple' : 'text-yellow' ?> icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="currentColor" fill-opacity="0.2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" /></svg>
                         </div>
-                        <div class="ged-item-name" title="<?= $folder->name ?>">
-                            <?= $folder->name ?>
+                        <div class="ged-item-name" title="<?= e($folder->name) ?>">
+                            <?= e($folder->name) ?>
                             <?php if (isset($folder->is_shared_received)): ?>
-                                <br><small class="text-blue">De: <?= $folder->shared_by_name ?></small>
+                                <br><small class="text-blue">De: <?= e($folder->shared_by_name) ?></small>
                             <?php endif; ?>
                         </div>
                         <div class="ged-item-info">
@@ -227,7 +247,7 @@ function formatSize($bytes) {
                 <div class="col-6 col-sm-4 col-md-3 col-xl-2">
                     <div class="card ged-item-card view-file h-100" 
                          data-id="<?= $file->id ?>" 
-                         data-name="<?= $file->name ?>" 
+                         data-name="<?= e($file->name) ?>" 
                          data-type="<?= $file->extension ?>"
                          data-physical="<?= $file->physical_name ?>">
                         <div class="ged-actions dropdown">
@@ -237,10 +257,10 @@ function formatSize($bytes) {
                             <div class="dropdown-menu dropdown-menu-end">
                                 <a class="dropdown-item" href="<?= URLROOT ?>/public/uploads/ged/<?= $file->physical_name ?>" target="_blank" onclick="event.stopPropagation();">Télécharger</a>
                                 <?php if (($file->is_mission ?? 0) == 0): ?>
-                                    <a class="dropdown-item rename-item" href="#" data-id="<?= $file->id ?>" data-name="<?= $file->name ?>" data-type="file" onclick="event.stopPropagation();">Renommer</a>
-                                    <a class="dropdown-item move-item" href="#" data-id="<?= $file->id ?>" data-name="<?= $file->name ?>" data-type="file" onclick="event.stopPropagation();">Déplacer</a>
-                                    <a class="dropdown-item copy-item" href="#" data-id="<?= $file->id ?>" data-name="<?= $file->name ?>" data-type="file" onclick="event.stopPropagation();">Copier</a>
-                                    <a class="dropdown-item share-item" href="#" data-id="<?= $file->id ?>" data-name="<?= $file->name ?>" data-type="file" onclick="event.stopPropagation();">Partager</a>
+                                    <a class="dropdown-item rename-item" href="#" data-id="<?= $file->id ?>" data-name="<?= e($file->name) ?>" data-type="file" onclick="event.stopPropagation();">Renommer</a>
+                                    <a class="dropdown-item move-item" href="#" data-id="<?= $file->id ?>" data-name="<?= e($file->name) ?>" data-type="file" onclick="event.stopPropagation();">Déplacer</a>
+                                    <a class="dropdown-item copy-item" href="#" data-id="<?= $file->id ?>" data-name="<?= e($file->name) ?>" data-type="file" onclick="event.stopPropagation();">Copier</a>
+                                    <a class="dropdown-item share-item" href="#" data-id="<?= $file->id ?>" data-name="<?= e($file->name) ?>" data-type="file" onclick="event.stopPropagation();">Partager</a>
                                     <a class="dropdown-item" href="#" onclick="event.stopPropagation();">Remplacer</a>
                                     <div class="dropdown-divider"></div>
                                     <form method="POST" action="<?= URLROOT ?>/ged/delete" class="m-0" onsubmit="event.stopPropagation(); return confirm('Supprimer ce fichier ?');">
@@ -269,8 +289,8 @@ function formatSize($bytes) {
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon text-muted icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /></svg>
                             <?php endif; ?>
                         </div>
-                        <div class="ged-item-name" title="<?= $file->name ?>">
-                            <?= $file->name ?>
+                        <div class="ged-item-name" title="<?= e($file->name) ?>">
+                            <?= e($file->name) ?>
                         </div>
                         <div class="ged-item-info">
                             <span class="text-muted small" title="Date d'arrivée">
@@ -356,6 +376,14 @@ function formatSize($bytes) {
                         <input type="file" name="files[]" id="file-input" multiple class="d-none">
                         <div id="file-list-preview" class="mt-3 text-start small text-blue"></div>
                     </div>
+
+                    <div id="upload-progress-wrap" class="mt-3 d-none">
+                        <div class="progress" style="height:1.25rem">
+                            <div class="progress-bar" id="upload-progress-bar" role="progressbar" style="width:0%">0%</div>
+                        </div>
+                        <div class="text-muted small mt-1" id="upload-progress-label">Envoi en cours…</div>
+                    </div>
+                    <div id="upload-result" class="mt-3"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn me-auto" data-bs-dismiss="modal">Annuler</button>
@@ -428,7 +456,7 @@ function formatSize($bytes) {
                         <label class="form-label">Partager avec...</label>
                         <select class="form-select" name="user_ids[]" multiple size="5" required>
                             <?php foreach ($data['tenant_users'] as $user): ?>
-                                <option value="<?= $user->id ?>"><?= $user->username ?></option>
+                                <option value="<?= (int) $user->id ?>"><?= e($user->username) ?></option>
                             <?php endforeach; ?>
                         </select>
                         <small class="text-muted">Maintenez Ctrl pour sélectionner plusieurs personnes.</small>

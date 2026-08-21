@@ -100,42 +100,94 @@ class Ged extends Controller {
     }
 
     public function upload() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['files'])) {
-            // (La vérification CSRF est assurée globalement par le front controller App.)
-            $folderId = $_POST['parent_id'];
-            $targetDir = APPROOT . '/../public/uploads/ged/';
+        if ($_SERVER['REQUEST_METHOD'] != 'POST') return;
 
-            // 0755 et non 0777 : le dossier ne doit pas être inscriptible par tous.
-            if (!is_dir($targetDir)) {
-                mkdir($targetDir, 0755, true);
-            }
+        $isAjax = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
 
-            foreach ($_FILES['files']['tmp_name'] as $key => $tmpName) {
-                $name = $_FILES['files']['name'][$key];
-                $size = $_FILES['files']['size'][$key];
-
-                // Validation de sécurité : extension en liste blanche, MIME réel,
-                // nom physique aléatoire. Un fichier refusé est simplement ignoré.
-                $check = validate_upload($name, $tmpName, $size);
-                if (!$check['ok']) {
-                    continue;
-                }
-
-                if (move_uploaded_file($tmpName, $targetDir . $check['physical_name'])) {
-                    $fileData = [
-                        'folder_id' => $folderId,
-                        'user_id' => $_SESSION['user_id'],
-                        'name' => $name,
-                        'physical_name' => $check['physical_name'],
-                        'size' => $size,
-                        'extension' => $check['extension'],
-                        'mime_type' => $check['mime'] // MIME réel détecté, pas celui du client
-                    ];
-                    $this->gedFileModel->addFile($fileData);
-                }
-            }
-            header('Location: ' . URLROOT . '/ged/folder/' . $folderId);
+        // Mutualisé : si le POST dépasse post_max_size, PHP vide $_POST/$_FILES
+        // alors que des données ont bien été envoyées (CONTENT_LENGTH > 0).
+        if (empty($_FILES) && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+            $msg = "Le total des fichiers dépasse la limite du serveur (post_max_size). Réduisez la taille ou le nombre de fichiers, puis réessayez.";
+            if ($isAjax) { header('Content-Type: application/json'); echo json_encode(['reload' => false, 'errors' => [$msg]]); exit; }
+            $_SESSION['ged_flash_errors'] = [$msg];
+            header('Location: ' . URLROOT . '/ged');
+            exit;
         }
+        if (!isset($_FILES['files'])) {
+            if ($isAjax) { header('Content-Type: application/json'); echo json_encode(['reload' => false, 'errors' => ['Aucun fichier reçu.']]); exit; }
+            header('Location: ' . URLROOT . '/ged');
+            exit;
+        }
+
+        // (La vérification CSRF est assurée globalement par le front controller App.)
+        $folderId = $_POST['parent_id'] ?? null;
+        $targetDir = APPROOT . '/../public/uploads/ged/';
+        // 0755 et non 0777 : le dossier ne doit pas être inscriptible par tous.
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+
+        $okCount = 0;
+        $errors = [];
+
+        foreach ($_FILES['files']['tmp_name'] as $key => $tmpName) {
+            $name = $_FILES['files']['name'][$key] ?? 'Fichier';
+            $err  = $_FILES['files']['error'][$key] ?? UPLOAD_ERR_NO_FILE;
+
+            // Erreur de transfert (taille serveur dépassée, transfert partiel…).
+            if ($err !== UPLOAD_ERR_OK) {
+                if ($err !== UPLOAD_ERR_NO_FILE) { // champ vide : on ignore en silence
+                    $errors[] = $name . ' : ' . upload_error_message($err);
+                }
+                continue;
+            }
+
+            $size = $_FILES['files']['size'][$key];
+
+            // Validation de sécurité : extension en liste blanche, MIME réel,
+            // nom physique aléatoire.
+            $check = validate_upload($name, $tmpName, $size);
+            if (!$check['ok']) {
+                $errors[] = $name . ' : ' . $check['error']; // retour explicite
+                continue;
+            }
+
+            if (move_uploaded_file($tmpName, $targetDir . $check['physical_name'])) {
+                $this->gedFileModel->addFile([
+                    'folder_id'     => $folderId,
+                    'user_id'       => $_SESSION['user_id'],
+                    'name'          => $name,
+                    'physical_name' => $check['physical_name'],
+                    'size'          => $size,
+                    'extension'     => $check['extension'],
+                    'mime_type'     => $check['mime'], // MIME réel détecté, pas celui du client
+                ]);
+                $okCount++;
+            } else {
+                $errors[] = $name . " : échec de l'enregistrement du fichier.";
+            }
+        }
+
+        // Retour AJAX (upload XHR avec barre de progression) : on recharge dès
+        // qu'au moins un fichier est passé (le flash affiche succès + refus) ;
+        // sinon on renvoie les erreurs pour affichage dans la modale.
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            if ($okCount > 0) {
+                $_SESSION['ged_flash_success'] = $okCount . ' fichier(s) importé(s) avec succès.';
+                if ($errors) { $_SESSION['ged_flash_errors'] = $errors; }
+                echo json_encode(['reload' => true]);
+            } else {
+                echo json_encode(['reload' => false, 'errors' => $errors]);
+            }
+            exit;
+        }
+
+        // Retour classique (formulaire POST sans JavaScript).
+        if ($okCount > 0) { $_SESSION['ged_flash_success'] = $okCount . ' fichier(s) importé(s) avec succès.'; }
+        if ($errors)      { $_SESSION['ged_flash_errors']  = $errors; }
+        header('Location: ' . URLROOT . '/ged/folder/' . $folderId);
+        exit;
     }
 
     public function createFolder() {
@@ -366,8 +418,13 @@ class Ged extends Controller {
     }
 
     public function generateExternalLink($folderId) {
+        // Sécurité : ne générer un lien public que sur un dossier appartenant à
+        // l'utilisateur courant (sinon un simple utilisateur pouvait émettre un
+        // jeton de dépôt/consultation sur le dossier d'autrui, cross-tenant).
+        $this->ownedFolderOrDeny($folderId);
+
         $linkModel = $this->model('GedExternalLink');
-        
+
         // Vérifier si un lien existe déjà pour ce dossier
         $existingLink = $linkModel->getLinkByFolderId($folderId);
         

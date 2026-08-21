@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $data['title'] ?></title>
+    <title><?= e($data['title']) ?></title>
     <link rel="icon" type="image/png" href="<?= URLROOT ?>/public/assets/dwac.png">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
     <style>
         .file-item:hover { background-color: rgba(32, 107, 196, 0.03); }
         .folder-item { cursor: pointer; }
@@ -30,9 +30,9 @@
                                         $qParam = $data['search_term'] ? '&q=' . urlencode($data['search_term']) : '';
                                     ?>
                                     <?php if ($index === count($data['breadcrumbs']) - 1): ?>
-                                        <?= $crumb->name ?>
+                                        <?= e($crumb->name) ?>
                                     <?php else: ?>
-                                        <a href="<?= URLROOT ?>/externalged/deposit/<?= $data['link']->token ?>/<?= $crumb->id ?>?sort=<?= $data['sort'] ?>&dir=<?= $data['dir'] ?><?= $qParam ?>"><?= $crumb->name ?></a>
+                                        <a href="<?= URLROOT ?>/externalged/deposit/<?= e($data['link']->token) ?>/<?= (int) $crumb->id ?>?sort=<?= e($data['sort']) ?>&dir=<?= e($data['dir']) ?><?= $qParam ?>"><?= e($crumb->name) ?></a>
                                     <?php endif; ?>
                                 </li>
                             <?php endforeach; ?>
@@ -42,13 +42,13 @@
                 <div class="col-md-4">
                     <form action="" method="GET">
                         <!-- On conserve les paramètres de tri lors de la recherche -->
-                        <input type="hidden" name="sort" value="<?= $data['sort'] ?>">
-                        <input type="hidden" name="dir" value="<?= $data['dir'] ?>">
+                        <input type="hidden" name="sort" value="<?= e($data['sort']) ?>">
+                        <input type="hidden" name="dir" value="<?= e($data['dir']) ?>">
                         <div class="input-icon">
                             <span class="input-icon-addon">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="10" cy="10" r="7" /><line x1="21" y1="21" x2="15" y2="15" /></svg>
                             </span>
-                            <input type="text" name="q" class="form-control" placeholder="Rechercher dans ce dossier..." value="<?= $data['search_term'] ?? '' ?>">
+                            <input type="text" name="q" class="form-control" placeholder="Rechercher dans ce dossier..." value="<?= e($data['search_term'] ?? '') ?>">
                         </div>
                     </form>
                 </div>
@@ -61,9 +61,9 @@
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h3 class="card-title">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-folder me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" /></svg>
-                                <?= isset($data['current_folder']) ? $data['current_folder']->name : 'Dossier' ?>
+                                <?= isset($data['current_folder']) ? e($data['current_folder']->name) : 'Dossier' ?>
                                 <?php if ($data['search_term']): ?>
-                                    <span class="text-muted small ms-2">(Résultats pour "<?= $data['search_term'] ?>")</span>
+                                    <span class="text-muted small ms-2">(Résultats pour "<?= e($data['search_term']) ?>")</span>
                                 <?php endif; ?>
                             </h3>
                             <div class="dropdown">
@@ -87,11 +87,11 @@
                             <!-- Dossiers -->
                             <?php if (isset($data['subfolders']) && is_array($data['subfolders'])): ?>
                                 <?php foreach ($data['subfolders'] as $folder): ?>
-                                    <a href="<?= URLROOT ?>/externalged/deposit/<?= $data['link']->token ?>/<?= $folder->id ?>?sort=<?= $data['sort'] ?>&dir=<?= $data['dir'] ?><?= $qParam ?>" class="list-group-item list-group-item-action file-item">
+                                    <a href="<?= URLROOT ?>/externalged/deposit/<?= e($data['link']->token) ?>/<?= (int) $folder->id ?>?sort=<?= e($data['sort']) ?>&dir=<?= e($data['dir']) ?><?= $qParam ?>" class="list-group-item list-group-item-action file-item">
                                         <div class="d-flex align-items-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-folder text-yellow me-3" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" /></svg>
                                             <div class="flex-fill">
-                                                <div class="font-weight-medium text-dark"><?= $folder->name ?></div>
+                                                <div class="font-weight-medium text-dark"><?= e($folder->name) ?></div>
                                                 <div class="text-muted small">Dossier • <?= date('d/m/Y H:i', strtotime($folder->created_at)) ?></div>
                                             </div>
                                         </div>
@@ -108,7 +108,7 @@
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file text-blue" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /></svg>
                                             </div>
                                             <div class="col text-truncate">
-                                                <div class="text-reset d-block"><?= $file->name ?></div>
+                                                <div class="text-reset d-block"><?= e($file->name) ?></div>
                                                 <div class="text-muted small mt-n1">
                                                     <?= round($file->size / 1024, 1) ?> KB • <?= date('d/m/Y H:i', strtotime($file->created_at)) ?>
                                                 </div>
@@ -116,9 +116,9 @@
                                             <div class="col-auto">
                                                 <button type="button" 
                                                         class="btn btn-sm btn-outline-primary view-file-btn" 
-                                                        data-url="<?= URLROOT ?>/externalged/viewFile/<?= $data['link']->token ?>/<?= $file->id ?>"
-                                                        data-name="<?= $file->name ?>"
-                                                        data-ext="<?= strtolower($file->extension) ?>">
+                                                        data-url="<?= URLROOT ?>/externalged/viewFile/<?= e($data['link']->token) ?>/<?= (int) $file->id ?>"
+                                                        data-name="<?= e($file->name) ?>"
+                                                        data-ext="<?= e(strtolower($file->extension)) ?>">
                                                     Visualiser
                                                 </button>
                                             </div>
@@ -241,9 +241,12 @@
             }
 
             function updateList() {
-                const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
-                const MAX_TOTAL_SIZE = 512 * 1024 * 1024; // 512 MB
-                
+                // Limite alignée sur le serveur (MAX_UPLOAD_MB) pour éviter de
+                // laisser sélectionner des fichiers qui seront refusés côté serveur.
+                const MAX_MB = <?= (int) (defined('MAX_UPLOAD_MB') ? MAX_UPLOAD_MB : 64) ?>;
+                const MAX_FILE_SIZE = MAX_MB * 1024 * 1024;
+                const MAX_TOTAL_SIZE = Math.round(MAX_MB * 1.1) * 1024 * 1024; // marge multi-fichiers
+
                 let totalSize = 0;
                 let hasError = false;
                 let errorMsg = "";
@@ -252,7 +255,7 @@
                     totalSize += f.size;
                     let fileError = "";
                     if (f.size > MAX_FILE_SIZE) {
-                        fileError = ' <span class="text-danger">(Trop volumineux: > 1GB)</span>';
+                        fileError = ' <span class="text-danger">(Trop volumineux : > ' + MAX_MB + ' Mo)</span>';
                         hasError = true;
                     }
                     return `<div class="p-1 border-bottom text-truncate">${f.name} <span class="text-muted">(${Math.round(f.size/1024)} KB)</span>${fileError}</div>`;
@@ -260,7 +263,7 @@
 
                 if (totalSize > MAX_TOTAL_SIZE) {
                     hasError = true;
-                    errorMsg = `<div class="alert alert-danger mt-2 py-2 small">Taille totale excessive: ${Math.round(totalSize / (1024*1024))}MB / 512MB max.</div>`;
+                    errorMsg = `<div class="alert alert-danger mt-2 py-2 small">Taille totale excessive : ${Math.round(totalSize / (1024*1024))} Mo (max ${Math.round(MAX_TOTAL_SIZE/(1024*1024))} Mo).</div>`;
                 }
 
                 fileList.innerHTML = listHtml + errorMsg;

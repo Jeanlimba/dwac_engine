@@ -204,6 +204,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const fileInput = document.getElementById('file-input');
     const fileListPreview = document.getElementById('file-list-preview');
     const btnSubmitUpload = document.getElementById('btn-submit-upload');
+    const MAX_MB = <?= (int) (defined('MAX_UPLOAD_MB') ? MAX_UPLOAD_MB : 64) ?>;
 
     if (dropZone) {
         // Au clic sur la zone, on ouvre le sélecteur de fichier
@@ -240,25 +241,85 @@ document.addEventListener("DOMContentLoaded", function() {
 
         function handleFiles(files) {
             if (files.length > 0) {
-                // Pour que le formulaire envoie bien les fichiers déposés, 
-                // on les assigne à l'input file (en utilisant DataTransfer pour la compatibilité)
+                // On assigne les fichiers déposés à l'input (DataTransfer pour compat).
                 const dataTransfer = new DataTransfer();
                 let previewContent = '<strong>Fichiers sélectionnés :</strong><ul class="mb-0">';
-                
+                let oversize = false;
+
                 for (let file of files) {
                     dataTransfer.items.add(file);
-                    previewContent += `<li>${file.name} (${(file.size / 1024).toFixed(1)} KB)</li>`;
+                    const mb = file.size / 1048576;
+                    const tooBig = mb > MAX_MB;
+                    if (tooBig) oversize = true;
+                    const sizeTxt = mb >= 1 ? mb.toFixed(1) + ' Mo' : (file.size / 1024).toFixed(0) + ' Ko';
+                    previewContent += '<li' + (tooBig ? ' class="text-danger"' : '') + '>' +
+                        file.name + ' (' + sizeTxt + ')' +
+                        (tooBig ? ' — trop volumineux (max ' + MAX_MB + ' Mo)' : '') + '</li>';
                 }
                 previewContent += '</ul>';
+                if (oversize) previewContent += '<div class="text-danger small mt-1">Retirez le(s) fichier(s) trop volumineux avant d\'importer.</div>';
 
                 fileInput.files = dataTransfer.files;
                 fileListPreview.innerHTML = previewContent;
-                btnSubmitUpload.disabled = false;
+                btnSubmitUpload.disabled = oversize;
             } else {
                 fileListPreview.innerHTML = '';
                 btnSubmitUpload.disabled = true;
             }
         }
+    }
+
+    // --- Envoi XHR avec barre de progression ---
+    const uploadForm = document.getElementById('upload-form');
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (!fileInput || !fileInput.files.length) return;
+
+            const wrap = document.getElementById('upload-progress-wrap');
+            const bar = document.getElementById('upload-progress-bar');
+            const label = document.getElementById('upload-progress-label');
+            const result = document.getElementById('upload-result');
+            result.innerHTML = '';
+            wrap.classList.remove('d-none');
+            btnSubmitUpload.disabled = true;
+            bar.style.width = '0%'; bar.textContent = '0%';
+            label.textContent = 'Envoi en cours…';
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', uploadForm.action, true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.upload.onprogress = function (ev) {
+                if (ev.lengthComputable) {
+                    const pct = Math.round(ev.loaded / ev.total * 100);
+                    bar.style.width = pct + '%';
+                    bar.textContent = pct + '%';
+                    if (pct >= 100) label.textContent = 'Traitement sur le serveur…';
+                }
+            };
+            xhr.onload = function () {
+                let res = {};
+                try { res = JSON.parse(xhr.responseText); } catch (err) {}
+                if (res.reload) { window.location.reload(); return; }
+                btnSubmitUpload.disabled = false;
+                wrap.classList.add('d-none');
+                const errs = (res.errors && res.errors.length) ? res.errors : ["Échec de l'import."];
+                result.innerHTML = '<div class="alert alert-warning mb-0"><div class="fw-bold mb-1">Aucun fichier importé :</div><ul class="mb-0 ps-3">' +
+                    errs.map(function (x) { return '<li>' + escapeHtml(x) + '</li>'; }).join('') + '</ul></div>';
+            };
+            xhr.onerror = function () {
+                btnSubmitUpload.disabled = false;
+                wrap.classList.add('d-none');
+                result.innerHTML = '<div class="alert alert-danger mb-0">Erreur réseau pendant l\'envoi.</div>';
+            };
+            xhr.send(new FormData(uploadForm));
+        });
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c];
+        });
     }
 });
 </script>
