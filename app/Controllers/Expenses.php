@@ -7,6 +7,9 @@ class Expenses extends Controller {
     public function __construct() {
         $this->requireLogin();
         $this->denySuperAdmin();
+        // Module « Dépenses » désactivé à la demande : toutes les actions de ce
+        // contrôleur renvoient 404 (route inaccessible même par URL directe).
+        $this->featureDisabled();
 
         $this->expenseModel = $this->model('Expense');
         $this->missionModel = $this->model('Mission');

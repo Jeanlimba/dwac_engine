@@ -22,6 +22,13 @@ class Expense {
         return $row->total ?? 0;
     }
 
+    /** Répartition des dépenses par statut du tenant (graphe dashboard). */
+    public function getStatusBreakdown($tenant_id) {
+        $this->db->query("SELECT status, COUNT(*) AS total FROM expenses WHERE tenant_id = :tenant_id GROUP BY status ORDER BY total DESC");
+        $this->db->bind(':tenant_id', $tenant_id);
+        return $this->db->resultSet();
+    }
+
     public function countEmployeePendingExpenses($employee_id) {
         $this->db->query("SELECT COUNT(*) as total FROM expenses WHERE employee_id = :employee_id AND status = 'En attente'");
         $this->db->bind(':employee_id', $employee_id);

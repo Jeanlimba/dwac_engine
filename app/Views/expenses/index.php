@@ -126,7 +126,7 @@
                                                             <button class="btn dropdown-toggle align-text-top" data-bs-toggle="dropdown">Actions</button>
                                                             <div class="dropdown-menu dropdown-menu-end">
                                                                 <?php if($expense->receipt_path): ?>
-                                                                    <a class="dropdown-item" href="<?= URLROOT . '/' . $expense->receipt_path ?>" target="_blank">Voir le reçu</a>
+                                                                    <a class="dropdown-item" href="<?= e(URLROOT . '/' . $expense->receipt_path) ?>" target="_blank">Voir le reçu</a>
                                                                 <?php endif; ?>
                                                                 <?php if($expense->status == 'En attente' || $expense->status == 'Rejeté' || $expense->status == 'Modification demandée'): ?>
                                                                     <a href="<?= URLROOT ?>/expenses/edit/<?= $expense->id ?>" class="dropdown-item">Modifier</a>

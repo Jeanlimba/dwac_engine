@@ -96,7 +96,7 @@
                         <label class="form-label">Reçu (Justificatif)</label>
                         <?php if($data['expense']->receipt_path): ?>
                             <div class="mb-2">
-                                <a href="<?= URLROOT . '/' . $data['expense']->receipt_path ?>" target="_blank" class="btn btn-sm btn-ghost-secondary">
+                                <a href="<?= e(URLROOT . '/' . $data['expense']->receipt_path) ?>" target="_blank" class="btn btn-sm btn-ghost-secondary">
                                     Voir le reçu actuel
                                 </a>
                             </div>
