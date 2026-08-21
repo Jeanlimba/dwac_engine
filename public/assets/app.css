@@ -1,0 +1,264 @@
+/* =============================================================================
+   DWAC Engine — Thème "Navy institutionnel" (surcouche Tabler / Bootstrap 5)
+   Palette et esprit alignés sur l'écran de connexion. Allure officielle :
+   navy profond + accent acier, angles nets, typographie sobre.
+   ========================================================================== */
+
+:root {
+    /* Marque — navy & accent */
+    --navy:      #0f2a47;
+    --navy-d:    #0a2038;
+    --accent:    #14487a;   /* couleur principale (boutons, liens, focus) */
+    --accent-h:  #0f3a63;   /* survol */
+    --accent-50: #eaf1f8;   /* teinte claire (fonds, hovers) */
+    --accent-100:#d6e3f0;
+    --navy-gradient: linear-gradient(180deg, var(--navy) 0%, var(--navy-d) 100%);
+
+    /* Neutres */
+    --ink:       #12233b;
+    --ink-soft:  #3a4a60;
+    --muted:     #748498;
+    --line:      #e2e6ec;
+    --line-soft: #eef1f5;
+    --surface:   #ffffff;
+    --canvas:    #e9edf2;
+
+    /* Profondeur */
+    --shadow-xs: 0 1px 2px rgba(15, 42, 71, .05);
+    --shadow-sm: 0 1px 3px rgba(15, 42, 71, .08), 0 1px 2px rgba(15, 42, 71, .05);
+    --shadow-md: 0 10px 26px -10px rgba(15, 42, 71, .22), 0 2px 6px rgba(15, 42, 71, .07);
+    --shadow-lg: 0 24px 60px -24px rgba(15, 42, 71, .45);
+
+    /* Rayons — allure nette, institutionnelle */
+    --r-sm: 3px;
+    --r-md: 4px;
+    --r-lg: 5px;
+
+    /* Tabler overrides */
+    --tblr-primary: var(--accent);
+    --tblr-primary-rgb: 20, 72, 122;
+    --tblr-primary-fg: #ffffff;
+    --tblr-link-color: var(--accent);
+    --tblr-link-hover-color: var(--accent-h);
+    --tblr-border-radius: var(--r-md);
+    --tblr-body-bg: var(--canvas);
+    --tblr-font-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", sans-serif;
+}
+
+/* ------------------------------------------------------------------ Base */
+body {
+    background: var(--canvas);
+    background-image:
+        repeating-radial-gradient(circle at 88% 6%, rgba(15,42,71,.045) 0 1px, transparent 1px 34px),
+        repeating-radial-gradient(circle at 6% 96%, rgba(15,42,71,.04) 0 1px, transparent 1px 40px);
+    color: var(--ink);
+    font-family: var(--tblr-font-sans-serif);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.004em;
+}
+a { text-decoration: none; }
+::selection { background: var(--accent-100); color: var(--navy); }
+
+/* ------------------------------------------------------------- Typographie */
+.page-title { font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
+.page-pretitle, .subheader {
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-size: .7rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+.card-title { font-weight: 650; color: var(--ink); letter-spacing: -0.01em; text-transform: none; }
+.text-muted, .text-secondary { color: var(--muted) !important; }
+
+/* ------------------------------------------------------------------ Cartes */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow .2s ease, border-color .2s ease;
+}
+.card-header { border-bottom: 1px solid var(--line); padding: .9rem 1.25rem; background: transparent; min-height: auto; }
+.card-body { padding: 1.25rem; }
+.card-footer { border-top: 1px solid var(--line-soft); background: #fafbfc; }
+.row-cards .card:hover, .row-deck .card:hover, .card-sm:hover, a .card:hover { box-shadow: var(--shadow-md); border-color: var(--accent-100); }
+.card-body .h1, .card-body .h2 { font-weight: 750; letter-spacing: -0.03em; color: var(--navy); }
+.card-sm .avatar { border-radius: var(--r-md); }
+
+/* ----------------------------------------------------------------- Boutons */
+.btn { border-radius: var(--r-sm); font-weight: 650; padding: .5rem .95rem;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .1s ease, box-shadow .2s ease; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 4px 12px -6px rgba(15, 42, 71, .5); }
+.btn-primary:hover, .btn-primary:focus { background: var(--accent-h); border-color: var(--accent-h); color: #fff; }
+.btn-primary:active { background: var(--navy); border-color: var(--navy); }
+.btn-outline-primary { border-color: var(--accent); color: var(--accent); }
+.btn-outline-primary:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-ghost-primary { color: var(--accent); }
+.btn-ghost-primary:hover { background: var(--accent-50); color: var(--accent-h); }
+.btn-link { color: var(--accent); }
+
+/* --------------------------------------------------------------- Formulaires */
+.form-label { font-weight: 600; color: var(--ink-soft); font-size: .8rem; margin-bottom: .35rem; }
+.form-control, .form-select {
+    border-radius: var(--r-sm); border: 1px solid #d5dbe4; padding: .55rem .8rem;
+    color: var(--ink); background-color: #fbfcfe;
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.form-control::placeholder { color: #aeb8c6; }
+.form-control:focus, .form-select:focus { background: #fff; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(20, 72, 122, .15); }
+.input-group-flat:focus-within { box-shadow: 0 0 0 3px rgba(20, 72, 122, .15); border-radius: var(--r-sm); }
+
+/* ------------------------------------------------------------------ Tables */
+.table { color: var(--ink-soft); }
+.table thead th {
+    text-transform: uppercase; letter-spacing: .06em; font-size: .68rem; font-weight: 700;
+    color: var(--muted); border-bottom: 2px solid var(--line); padding: .8rem 1rem; background: #f6f8fb;
+}
+.table tbody td { padding: .75rem 1rem; border-color: var(--line-soft); vertical-align: middle; }
+.card-table tbody tr { transition: background-color .12s ease; }
+.card-table tbody tr:hover { background: var(--accent-50); }
+.table td.text-end, .table th.text-end { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ------------------------------------------------------------------ Badges */
+.badge { font-weight: 650; letter-spacing: .02em; border-radius: var(--r-sm); padding: .34em .6em; }
+.badge.badge-outline { border: 1px solid var(--line); background: #fff; color: var(--ink-soft) !important; font-weight: 600; }
+
+/* --------------------------------------------------------- Couleurs marque */
+.bg-primary { background-color: var(--accent) !important; }
+.bg-primary-lt, .bg-blue-lt { background: var(--accent-50) !important; color: var(--navy) !important; }
+.text-primary { color: var(--accent) !important; }
+.avatar { border-radius: var(--r-md); font-weight: 650; }
+.progress { background: var(--line); border-radius: 999px; }
+.progress-bar.bg-primary { background: var(--accent) !important; }
+
+/* ------------------------------------------------------------------ Alerts */
+.alert { border: 1px solid transparent; border-left-width: 3px; border-radius: var(--r-sm); box-shadow: var(--shadow-xs); }
+.alert-success { background: #e9f7ef; border-color: #12653a; color: #12653a; }
+.alert-danger  { background: #fdecec; border-color: #d63939; color: #8a1f1f; }
+.alert-warning { background: #fff6e6; border-color: #ad6f00; color: #7a4d00; }
+.alert-info    { background: var(--accent-50); border-color: var(--accent); color: var(--navy); }
+
+/* ============================================ Navbar & sidebar (navy) */
+/* Le layout d'evolution utilise une sidebar VERTICALE (.navbar-vertical) plus
+   un header supérieur : les deux sont des .navbar et reçoivent le fond navy. */
+.navbar {
+    background: var(--navy-gradient) !important;
+    border-bottom: 3px solid var(--accent);
+    box-shadow: 0 2px 10px -4px rgba(15, 42, 71, .5);
+    color: #fff;
+}
+
+.navbar-brand, .navbar-brand a, .navbar-brand .fw-bold { color: #fff !important; font-weight: 750; letter-spacing: -0.01em; }
+.navbar-brand .text-muted { color: rgba(255,255,255,.6) !important; }
+
+.navbar .nav-link {
+    color: rgba(255, 255, 255, .82) !important; font-weight: 600;
+    border-radius: var(--r-sm);
+    transition: background-color .15s ease, color .15s ease;
+}
+.navbar .nav-link:hover { color: #fff !important; background: rgba(255, 255, 255, .12); }
+.navbar .nav-link .nav-link-icon { color: inherit; }
+
+/* Sidebar : aligner icône + libellé à gauche (sinon Tabler centre = « escalier »). */
+.navbar-vertical .navbar-nav .nav-link { justify-content: flex-start; text-align: left; }
+
+/* Onglet actif (evolution marque .nav-item.active) */
+.navbar .navbar-nav > .nav-item.active > .nav-link,
+.navbar .navbar-nav .nav-link.active {
+    color: #fff !important; background: rgba(255, 255, 255, .14); font-weight: 700;
+    box-shadow: inset 0 -3px 0 rgba(255, 255, 255, .9);
+}
+
+/* Contrôles clairs dans la barre (nom, rôle, cloche, avatar) */
+.navbar .text-secondary, .navbar .text-muted { color: rgba(255, 255, 255, .6) !important; }
+.navbar .avatar.bg-blue-lt, .navbar .avatar-sm { background: var(--accent) !important; color: #fff !important; }
+.navbar .navbar-toggler { color: #fff; border-color: rgba(255,255,255,.3); }
+.navbar .btn-close { filter: invert(1) grayscale(1) brightness(1.6); }
+
+/* Bouton bascule thème clair/sombre (icône claire sur navy) */
+.theme-toggle { background: transparent; border: 0; cursor: pointer; color: rgba(255,255,255,.85); line-height: 1; padding: 0.25rem; }
+.theme-toggle:hover { color: #fff; }
+.theme-toggle .icon-moon, .theme-toggle .icon-sun { display: none; }
+:root[data-bs-theme="light"] .theme-toggle .icon-moon { display: inline-block; }
+:root[data-bs-theme="dark"]  .theme-toggle .icon-sun  { display: inline-block; }
+
+/* Menus déroulants (popovers clairs) */
+.dropdown-menu { border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--shadow-md); padding: .3rem; }
+.dropdown-item { border-radius: var(--r-sm); padding: .5rem .7rem; font-weight: 500; color: var(--ink-soft); }
+.dropdown-item:hover { background: var(--accent-50); color: var(--accent-h); }
+.dropdown-item.active, .dropdown-item:active { background: var(--accent); color: #fff; }
+
+/* ----- Tiroir de navigation mobile (offcanvas) : fond navy, texte clair ---- */
+@media (max-width: 991.98px) {
+    #sidebar-menu.offcanvas-start {
+        --tblr-offcanvas-width: 16rem;
+        --bs-offcanvas-width: 16rem;
+        --tblr-offcanvas-bg: var(--navy);
+        --bs-offcanvas-bg: var(--navy);
+        width: 16rem;
+        background: var(--navy-gradient);
+        color: #fff;
+    }
+    #sidebar-menu .offcanvas-header { border-bottom: 1px solid rgba(255,255,255,.12); }
+}
+
+/* ============================================================ Pages d'auth */
+.auth-body {
+    min-height: 100vh; margin: 0; display: flex;
+    background:
+        repeating-radial-gradient(circle at 85% 12%, rgba(15,42,71,.05) 0 1px, transparent 1px 34px),
+        repeating-radial-gradient(circle at 8% 92%, rgba(15,42,71,.045) 0 1px, transparent 1px 40px),
+        var(--canvas);
+}
+.auth-shell { width: 100%; max-width: 430px; margin: auto; padding: 2rem 1.25rem; }
+.auth-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-lg); overflow: hidden; }
+.auth-card__head { background: var(--navy-gradient); border-bottom: 3px solid var(--accent); padding: 2rem 2rem 1.6rem; color: #fff; text-align: center; }
+.auth-brandmark { width: 74px; height: 74px; display: inline-block; background: #fff; border-radius: 50%; margin-bottom: .85rem; box-shadow: 0 4px 14px rgba(0,0,0,.3); padding: 0; overflow: hidden; }
+/* On recadre le logo pour ne garder que l'emblème coloré (rond), qui remplit
+   le cercle. Le texte "DWAC" du fichier est écarté (déjà présent en dessous). */
+.auth-brandmark img { width: 100%; height: 100%; object-fit: cover; object-position: center top; transform: scale(1.5); transform-origin: center top; border-radius: 50%; }
+.auth-brandmark svg { width: 32px; height: 32px; color: var(--accent); }
+.auth-card__head h1 { font-size: 1.3rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.auth-card__head .eyebrow { font-size: .7rem; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.66); }
+.auth-card__head p { margin: .35rem 0 0; opacity: .85; font-size: .9rem; }
+.auth-card__body { padding: 1.75rem 2rem 2rem; }
+.auth-card__foot { padding: 1rem 2rem; border-top: 1px solid var(--line-soft); text-align: center; background: #fafbfc; color: var(--muted); font-size: .78rem; }
+
+/* ------------------------------------------------------------- Page wrapper */
+.page-header { padding-top: 1.4rem; padding-bottom: .4rem; }
+.empty { padding: 2.5rem 1rem; }
+
+/* Barre de défilement discrète */
+* { scrollbar-width: thin; scrollbar-color: #b7c1d1 transparent; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb { background: #c2cbd9; border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: #a9b4c6; background-clip: padding-box; }
+
+/* ==========================================================================
+   Mode sombre : le navy de la barre reste identique ; on assombrit le contenu.
+   ========================================================================== */
+:root[data-bs-theme="dark"] {
+    --tblr-body-bg: #0d1622;
+    --canvas: #0d1622;
+    --surface: #16202e;
+    --ink: #e6edf5;
+    --ink-soft: #b9c4d2;
+    --muted: #8a97a8;
+    --line: #223045;
+    --line-soft: #1b2735;
+}
+:root[data-bs-theme="dark"] body { background: var(--canvas); background-image: none; color: var(--ink); }
+:root[data-bs-theme="dark"] .card { background: var(--surface); border-color: var(--line); box-shadow: 0 1px 2px rgba(0,0,0,.4); }
+:root[data-bs-theme="dark"] .card-footer,
+:root[data-bs-theme="dark"] .auth-card__foot { background: #121b28; }
+:root[data-bs-theme="dark"] .table thead th { background: #121b28; color: var(--muted); border-bottom-color: var(--line); }
+:root[data-bs-theme="dark"] .table tbody td { border-color: var(--line-soft); }
+:root[data-bs-theme="dark"] .card-table tbody tr:hover { background: rgba(20,72,122,.25); }
+:root[data-bs-theme="dark"] .form-control,
+:root[data-bs-theme="dark"] .form-select { background: #101a27; border-color: var(--line); color: var(--ink); }
+:root[data-bs-theme="dark"] .dropdown-menu { background: var(--surface); border-color: var(--line); }
+:root[data-bs-theme="dark"] .dropdown-item { color: var(--ink-soft); }
+:root[data-bs-theme="dark"] .dropdown-item:hover { background: rgba(20,72,122,.3); color: #fff; }

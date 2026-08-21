@@ -37,6 +37,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
 
 <script>
+// Bascule et mémorise le thème clair / sombre.
+function toggleTheme() {
+    var current = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-bs-theme', next);
+    localStorage.setItem('dwac-theme', next);
+}
+
 function viewFile(url, title = 'Visualisation du fichier') {
     const modalElement = document.getElementById('modal-view-file');
     const frame = document.getElementById('view-file-frame');
