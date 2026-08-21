@@ -1,0 +1,14 @@
+# =============================================================================
+# Les scripts de ce dossier sont des utilitaires de MAINTENANCE en LIGNE DE
+# COMMANDE (migrations, corrections, diagnostics). Ils ne doivent JAMAIS être
+# accessibles/exécutables via le web : certains dumpent des hash de mots de
+# passe ou réécrivent des comptes. Refus total d'accès HTTP (défense en
+# profondeur, en complément d'un docroot fixé sur public/).
+# =============================================================================
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

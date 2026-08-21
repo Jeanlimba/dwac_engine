@@ -1,6 +1,18 @@
 <?php
 
 /**
+ * Échappement HTML pour toute sortie de données non fiables (BD, session,
+ * requête) dans une vue. Raccourci standard : <?= e($valeur) ?>.
+ * ENT_QUOTES échappe aussi les apostrophes (attributs à quotes simples).
+ *
+ * @param mixed $value
+ * @return string
+ */
+function e($value) {
+    return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
+}
+
+/**
  * Initialize session securely.
  */
 function init_session() {
@@ -37,6 +49,15 @@ function init_session() {
             $_SESSION['last_regeneration'] = time();
         }
     }
+
+    // Expiration par inactivité : au-delà de 2h sans requête, la session est
+    // vidée (user_id disparaît => l'utilisateur est déconnecté).
+    $idleTimeout = 2 * 60 * 60;
+    if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $idleTimeout)) {
+        $_SESSION = [];
+        session_regenerate_id(true);
+    }
+    $_SESSION['last_activity'] = time();
 }
 
 /**
@@ -186,11 +207,14 @@ function generate_unique_username($pdo, $prenom, $nom, $acronym, $tenant_id) {
  */
 function allowed_upload_extensions() {
     return [
-        // Documents
-        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-        'odt', 'ods', 'odp', 'csv', 'txt', 'rtf',
-        // Images
-        'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg',
+        // Documents bureautiques
+        'pdf', 'doc', 'docx', 'docm', 'dot', 'dotx',
+        'xls', 'xlsx', 'xlsm', 'xlsb', 'ppt', 'pptx', 'ppsx',
+        'odt', 'ods', 'odp', 'csv', 'txt', 'rtf', 'md', 'xml', 'json',
+        // Images (dont HEIC/HEIF des iPhone et TIFF des scanners)
+        'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'heic', 'heif', 'tif', 'tiff',
+        // Courriels
+        'msg', 'eml',
         // Archives
         'zip', 'rar', '7z',
     ];
@@ -210,8 +234,14 @@ function allowed_upload_extensions() {
  * @param int      $maxBytes     Taille max autorisée (défaut 20 Mo).
  * @return array{ok:bool,error:string,extension:string,mime:string,physical_name:string}
  */
-function validate_upload($originalName, $tmpName, $size = null, $maxBytes = 20971520) {
+function validate_upload($originalName, $tmpName, $size = null, $maxBytes = null) {
     $result = ['ok' => false, 'error' => '', 'extension' => '', 'mime' => '', 'physical_name' => ''];
+
+    // Taille max applicative : configurable via MAX_UPLOAD_MB (.env), défaut 64 Mo.
+    // NB : de toute façon bornée par upload_max_filesize / post_max_size du serveur.
+    if ($maxBytes === null) {
+        $maxBytes = (defined('MAX_UPLOAD_MB') ? (int) MAX_UPLOAD_MB : 64) * 1048576;
+    }
 
     // 1. Extension présente et dans la liste blanche.
     $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
@@ -220,14 +250,16 @@ function validate_upload($originalName, $tmpName, $size = null, $maxBytes = 2097
         return $result;
     }
 
-    // 2. Refus des extensions exécutables même dissimulées dans le nom
-    //    (ex : "rapport.phtml.pdf" — chaque segment est inspecté).
-    $dangerous = ['php', 'php3', 'php4', 'php5', 'php7', 'phtml', 'phps', 'phar',
-                  'pht', 'cgi', 'pl', 'py', 'sh', 'asp', 'aspx', 'jsp', 'exe',
-                  'com', 'bat', 'htaccess'];
+    // 2. Refus des extensions de SCRIPT exécutables côté serveur, même
+    //    dissimulées en double extension (ex : "rapport.phtml.pdf"). On ne
+    //    bloque QUE les scripts réellement interprétés par le serveur web : on
+    //    a retiré exe/com/bat/htaccess (binaires Windows non exécutés par le
+    //    serveur) qui provoquaient des faux positifs — ex. "societe.com.pdf".
+    $dangerous = ['php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'phps',
+                  'phar', 'pht', 'shtml', 'cgi', 'pl', 'py', 'sh', 'asp', 'aspx', 'jsp'];
     foreach (explode('.', strtolower($originalName)) as $segment) {
         if (in_array($segment, $dangerous, true)) {
-            $result['error'] = "Nom de fichier interdit.";
+            $result['error'] = "Nom de fichier interdit (extension exécutable détectée).";
             return $result;
         }
     }
@@ -263,6 +295,28 @@ function validate_upload($originalName, $tmpName, $size = null, $maxBytes = 2097
     $result['mime']          = $mime;
     $result['physical_name'] = bin2hex(random_bytes(16)) . '.' . $ext;
     return $result;
+}
+
+/**
+ * Traduit un code d'erreur $_FILES[...]['error'] en message lisible.
+ * Essentiel en hébergement mutualisé où un fichier trop lourd renvoie
+ * UPLOAD_ERR_INI_SIZE (limite PHP) plutôt qu'un refus applicatif.
+ *
+ * @param int $code
+ * @return string  Chaîne vide si aucune erreur (UPLOAD_ERR_OK).
+ */
+function upload_error_message($code) {
+    switch ($code) {
+        case UPLOAD_ERR_OK:        return '';
+        case UPLOAD_ERR_INI_SIZE:
+        case UPLOAD_ERR_FORM_SIZE: return "Fichier trop volumineux pour le serveur (limite d'upload PHP dépassée).";
+        case UPLOAD_ERR_PARTIAL:   return "Transfert interrompu : fichier incomplet.";
+        case UPLOAD_ERR_NO_FILE:   return "Aucun fichier reçu.";
+        case UPLOAD_ERR_NO_TMP_DIR:return "Erreur serveur : dossier temporaire manquant.";
+        case UPLOAD_ERR_CANT_WRITE:return "Erreur serveur : écriture sur disque impossible.";
+        case UPLOAD_ERR_EXTENSION: return "Import bloqué par une extension PHP du serveur.";
+        default:                   return "Erreur d'upload (code " . (int) $code . ").";
+    }
 }
 
 /**

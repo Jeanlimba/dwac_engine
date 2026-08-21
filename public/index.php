@@ -13,7 +13,13 @@ load_env(__DIR__ . '/../.env');
  * (fuite de chemins, requêtes SQL, secrets) : on les journalise uniquement.
  * APP_DEBUG=true dans le .env peut forcer l'affichage si vraiment nécessaire.
  */
-$isLocalEnv = is_local_host($_SERVER['HTTP_HOST'] ?? '');
+if (defined('APP_ENV') && APP_ENV !== '') {
+    // Signal fiable prioritaire (cf. config/database.php) : l'en-tête Host ne
+    // doit pas décider de l'affichage des erreurs en production.
+    $isLocalEnv = in_array(strtolower(APP_ENV), ['local', 'dev', 'development'], true);
+} else {
+    $isLocalEnv = is_local_host($_SERVER['HTTP_HOST'] ?? '');
+}
 $appDebug = defined('APP_DEBUG') ? filter_var(APP_DEBUG, FILTER_VALIDATE_BOOLEAN) : false;
 
 error_reporting(E_ALL);
@@ -39,6 +45,13 @@ if (!headers_sent()) {
     header('X-Content-Type-Options: nosniff');
     header('X-Frame-Options: SAMEORIGIN');
     header('Referrer-Policy: strict-origin-when-cross-origin');
+    // HSTS : uniquement sous HTTPS (inclut le cas derrière proxy TLS). Force le
+    // navigateur à n'utiliser que HTTPS pendant 1 an.
+    $__https = (($_SERVER['HTTPS'] ?? '') === 'on' || ($_SERVER['HTTPS'] ?? '') === '1')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    if ($__https) {
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    }
 }
 
 /*

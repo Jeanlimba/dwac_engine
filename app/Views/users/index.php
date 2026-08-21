@@ -43,7 +43,7 @@
                                 <?= $user->nom ? htmlspecialchars($user->nom . ' ' . $user->prenom) : '<span class="badge bg-blue-lt">Admin</span>' ?>
                             </td>
                             <?php if ($_SESSION['is_super_admin']): ?>
-                                <td class="text-muted"><?= $user->tenant_name ?? 'Système' ?></td>
+                                <td class="text-muted"><?= e($user->tenant_name ?? 'Système') ?></td>
                             <?php endif; ?>
                             <td>
                                 <?php if ($user->status === 'active'): ?>

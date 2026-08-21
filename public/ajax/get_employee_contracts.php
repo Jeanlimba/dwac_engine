@@ -27,6 +27,16 @@ if (!$employee_id) {
     exit('ID employé manquant');
 }
 
+// IDOR : un employé SIMPLE ne peut consulter que son propre dossier. Les rôles
+// privilégiés (admin de tenant = sans employee_id, manager, superviseur)
+// consultent tout le tenant (la requête est déjà bornée au tenant en session).
+$isPrivileged = empty($_SESSION['employee_id'])
+    || in_array($_SESSION['user_role'] ?? '', ['admin', 'manager', 'superviseur'], true);
+if (!$isPrivileged && (int) $employee_id !== (int) $_SESSION['employee_id']) {
+    http_response_code(403);
+    exit('Accès refusé');
+}
+
 $stmt = $pdo->prepare("SELECT ec.*, p.nom_poste, d.name AS department_name 
                        FROM employee_contracts ec 
                        LEFT JOIN postes p ON ec.poste_id = p.id 

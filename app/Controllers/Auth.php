@@ -7,6 +7,17 @@ class Auth extends Controller {
 
     public function index() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            // Anti-brute-force : limiter les tentatives par IP sur une fenêtre
+            // glissante (réutilise le journal d'audit 'login_failed').
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+            $logModel = $this->model('ActionLog');
+            if ($logModel->countRecentFailures($ip, 15) >= 10) {
+                audit_log('login_blocked', 'Trop de tentatives depuis ' . $ip);
+                $_SESSION['login_error'] = "Trop de tentatives de connexion. Merci de patienter quelques minutes avant de réessayer.";
+                $this->view('auth/login');
+                return;
+            }
+
             // Process form
             $username = trim($_POST['username']);
             $password = trim($_POST['password']);
@@ -32,6 +43,9 @@ class Auth extends Controller {
     }
 
     public function createUserSession($user) {
+        // Anti-fixation de session : nouvel ID à l'élévation de privilège (login).
+        session_regenerate_id(true);
+
         $_SESSION['user_id'] = $user->id;
         $_SESSION['username'] = $user->username;
         $_SESSION['tenant_id'] = $user->tenant_id;

@@ -47,6 +47,26 @@ class ActionLog {
         return $this->db->resultSet();
     }
 
+    /**
+     * Nombre d'échecs de connexion enregistrés pour une IP donnée sur les N
+     * dernières minutes. Sert au throttling anti-brute-force de l'auth.
+     *
+     * @param string $ip      Adresse IP source.
+     * @param int    $minutes Fenêtre de temps (minutes).
+     * @return int
+     */
+    public function countRecentFailures($ip, $minutes = 15) {
+        $minutes = max(1, (int) $minutes); // casté : interpolation sûre
+        $this->db->query(
+            "SELECT COUNT(*) AS total FROM action_logs
+             WHERE action = 'login_failed' AND ip_address = :ip
+               AND created_at > (NOW() - INTERVAL $minutes MINUTE)"
+        );
+        $this->db->bind(':ip', $ip);
+        $row = $this->db->single();
+        return (int) ($row->total ?? 0);
+    }
+
     /** Nombre total d'entrées (pour la pagination). */
     public function countAll($tenantId = null) {
         $sql = "SELECT COUNT(*) AS total FROM action_logs";

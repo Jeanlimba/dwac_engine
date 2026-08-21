@@ -11,8 +11,13 @@ load_env(__DIR__ . '/../.env');
  */
 $is_local = false;
 
-if (isset($_SERVER['HTTP_HOST'])) {
-    // Via un navigateur : détection centralisée (gère le port et les TLD de dev).
+if (defined('APP_ENV') && APP_ENV !== '') {
+    // Signal d'environnement EXPLICITE et fiable (prioritaire) : ne dépend pas
+    // de l'en-tête Host, que le client peut falsifier pour forcer la bascule
+    // sur la configuration locale.
+    $is_local = in_array(strtolower(APP_ENV), ['local', 'dev', 'development'], true);
+} elseif (isset($_SERVER['HTTP_HOST'])) {
+    // Repli (compatibilité) : détection par hôte si APP_ENV n'est pas défini.
     $is_local = is_local_host($_SERVER['HTTP_HOST']);
 } else {
     // En ligne de commande (CLI) : Windows = local en général pour ce projet.

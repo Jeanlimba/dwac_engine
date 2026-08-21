@@ -23,14 +23,14 @@
     <div class="container-xl">
         <?php if (isset($_SESSION['success_message'])): ?>
             <div class="alert alert-success alert-dismissible" role="alert">
-                <?= $_SESSION['success_message']; unset($_SESSION['success_message']); ?>
+                <?= e($_SESSION['success_message']); unset($_SESSION['success_message']); ?>
                 <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
             </div>
         <?php endif; ?>
 
         <?php if (isset($_SESSION['error_message'])): ?>
             <div class="alert alert-danger alert-dismissible" role="alert">
-                <?= $_SESSION['error_message']; unset($_SESSION['error_message']); ?>
+                <?= e($_SESSION['error_message']); unset($_SESSION['error_message']); ?>
                 <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
             </div>
         <?php endif; ?>

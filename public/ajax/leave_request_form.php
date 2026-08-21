@@ -39,6 +39,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // Autorisation : un employé SIMPLE ne peut créer/modifier QUE ses propres
+    // congés (employee_id forcé à sa valeur de session). Les rôles privilégiés
+    // (admin de tenant, manager, superviseur) peuvent agir pour un employé, mais
+    // uniquement s'il appartient à leur tenant. Sans cela, l'employee_id fourni
+    // par le client permettait d'écrire des congés pour n'importe qui.
+    $isPrivileged = empty($_SESSION['employee_id'])
+        || in_array($_SESSION['user_role'] ?? '', ['admin', 'manager', 'superviseur'], true);
+    if (!$isPrivileged) {
+        $employee_id = (int) $_SESSION['employee_id'];
+    } else {
+        $ownChk = $pdo->prepare("SELECT 1 FROM employees WHERE id = :id AND tenant_id = :tenant_id");
+        $ownChk->execute(['id' => $employee_id, 'tenant_id' => $_SESSION['tenant_id'] ?? 0]);
+        if (!$ownChk->fetch()) {
+            echo json_encode(['success' => false, 'message' => 'Employé introuvable pour ce tenant.']);
+            exit;
+        }
+    }
+
     $attachment_path = $_POST['existing_attachment'] ?? null;
     if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
         $attachment_path = handle_upload('attachment', '../uploads/leaves/');

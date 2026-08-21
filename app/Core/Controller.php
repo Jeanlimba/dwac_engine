@@ -130,4 +130,20 @@ class Controller {
             die('Méthode non autorisée.');
         }
     }
+
+    /**
+     * Désactive une route / un module : renvoie une page 404 et stoppe.
+     * Utilisé pour rendre une fonctionnalité inaccessible même par URL directe
+     * (ex. module Dépenses masqué). Facilement réversible en retirant l'appel.
+     */
+    protected function featureDisabled() {
+        http_response_code(404);
+        $data = ['title' => 'Indisponible', 'notifications' => []];
+        if (file_exists(APPROOT . '/Views/errors/404.php')) {
+            require APPROOT . '/Views/errors/404.php';
+        } else {
+            echo 'Fonctionnalité désactivée.';
+        }
+        exit;
+    }
 }

@@ -24,6 +24,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['success' => false, 'message' => 'Authentification requise.']);
         exit;
     }
+
+    // Autorisation : la création/modification d'employés (et la génération d'un
+    // compte + l'attribution d'un rôle) est réservée à l'encadrement du tenant :
+    // admin de tenant (sans employee_id), ou rôle admin/manager/superviseur.
+    // Un employé SIMPLE est refusé ; un super-admin (sans tenant) aussi.
+    $isPrivileged = empty($_SESSION['employee_id'])
+        || in_array($_SESSION['user_role'] ?? '', ['admin', 'manager', 'superviseur'], true);
+    if (!empty($_SESSION['is_super_admin']) || !$isPrivileged) {
+        echo json_encode(['success' => false, 'message' => 'Accès refusé.']);
+        exit;
+    }
     csrf_check_or_die(); // Protection CSRF
 
     $employee_id = $_POST['id'] ?? null;
@@ -146,7 +157,7 @@ $provinces = $prov_stmt->fetchAll(PDO::FETCH_COLUMN);
             <div class="col-md-12 text-center mb-3">
                 <div class="form-label">Photo de profil</div>
                 <?php if(!empty($employee['photo'])): ?>
-                    <img src="<?= URLROOT . '/' . $employee['photo'] ?>" class="avatar avatar-xl mb-2 avatar-rounded">
+                    <img src="<?= e(URLROOT . '/' . $employee['photo']) ?>" class="avatar avatar-xl mb-2 avatar-rounded">
                 <?php endif; ?>
                 <input type="file" name="photo" class="form-control" accept="image/*">
             </div>

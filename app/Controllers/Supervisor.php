@@ -233,7 +233,21 @@ class Supervisor extends Controller {
         $this->view('supervisor/mission_details', $data);
     }
 
+    /**
+     * Vérifie que la mission appartient au tenant courant (sinon 403). Empêche
+     * d'agir sur le budget/les modèles d'une mission d'un autre tenant via son id.
+     */
+    private function ownedMissionOrDeny($mission_id) {
+        $mission = $this->missionModel->getMissionById($mission_id, $_SESSION['tenant_id']);
+        if (!$mission) {
+            http_response_code(403);
+            die("Accès non autorisé.");
+        }
+        return $mission;
+    }
+
     public function saveBudgetAsTemplate($mission_id) {
+        $this->ownedMissionOrDeny($mission_id);
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $name = trim($_POST['template_name']);
             if ($this->missionModel->saveBudgetAsTemplate($mission_id, $_SESSION['tenant_id'], $name)) {
@@ -247,6 +261,7 @@ class Supervisor extends Controller {
     }
 
     public function importBudgetTemplate($mission_id) {
+        $this->ownedMissionOrDeny($mission_id);
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $template_id = $_POST['template_id'];
             if ($this->missionModel->importTemplateToMission($template_id, $mission_id, $_SESSION['tenant_id'])) {
@@ -260,6 +275,8 @@ class Supervisor extends Controller {
     }
 
     public function deleteBudgetTemplate($id, $mission_id) {
+        $this->ownedMissionOrDeny($mission_id);
+        $this->requirePost();
         if ($this->missionModel->deleteBudgetTemplate($id, $_SESSION['tenant_id'])) {
             flash('mission_message', 'Modèle de budget supprimé');
         }
@@ -268,6 +285,7 @@ class Supervisor extends Controller {
     }
 
     public function addBudgetMainLine($mission_id) {
+        $this->ownedMissionOrDeny($mission_id);
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $data = [
                 'mission_id' => $mission_id,
@@ -288,6 +306,7 @@ class Supervisor extends Controller {
     }
 
     public function editBudgetMainLine($mission_id) {
+        $this->ownedMissionOrDeny($mission_id);
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $data = [
                 'id' => $_POST['id'],
@@ -308,6 +327,7 @@ class Supervisor extends Controller {
     }
 
     public function addBudgetDetailLine($mission_id) {
+        $this->ownedMissionOrDeny($mission_id);
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $unit = trim($_POST['unit']);
             $new_unit = trim($_POST['new_unit'] ?? '');
@@ -322,6 +342,7 @@ class Supervisor extends Controller {
             $amount = $qty * $price;
 
             $data = [
+                'mission_id' => $mission_id,
                 'main_line_id' => $_POST['main_line_id'],
                 'code' => trim($_POST['code']),
                 'label' => trim($_POST['label']),
@@ -343,6 +364,7 @@ class Supervisor extends Controller {
     }
 
     public function editBudgetDetailLine($mission_id) {
+        $this->ownedMissionOrDeny($mission_id);
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $unit = trim($_POST['unit']);
             $new_unit = trim($_POST['new_unit'] ?? '');
@@ -363,7 +385,8 @@ class Supervisor extends Controller {
                 'unit' => $unit,
                 'quantity' => $qty,
                 'unit_price' => $price,
-                'amount' => $amount
+                'amount' => $amount,
+                'mission_id' => $mission_id
             ];
             $this->missionModel->updateBudgetDetailLine($data);
             
@@ -378,6 +401,8 @@ class Supervisor extends Controller {
     }
 
     public function deleteBudgetMainLine($id, $mission_id) {
+        $this->ownedMissionOrDeny($mission_id);
+        $this->requirePost();
         $this->missionModel->deleteBudgetMainLine($id, $mission_id);
         
         if ($this->isAjax()) {
@@ -390,7 +415,9 @@ class Supervisor extends Controller {
     }
 
     public function deleteBudgetDetailLine($id, $mission_id) {
-        $this->missionModel->deleteBudgetDetailLine($id);
+        $this->ownedMissionOrDeny($mission_id);
+        $this->requirePost();
+        $this->missionModel->deleteBudgetDetailLine($id, $mission_id);
         
         if ($this->isAjax()) {
             $this->renderBudgetTable($mission_id);
@@ -415,6 +442,7 @@ class Supervisor extends Controller {
     }
 
     public function addMissionBudgetItem($mission_id) {
+        $this->ownedMissionOrDeny($mission_id);
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Retrieve charge name for label fallback
             $charge_id = $_POST['charge_id'];
@@ -564,6 +592,7 @@ class Supervisor extends Controller {
     }
 
     public function deleteMission($id) {
+        $this->requirePost();
         if ($this->missionModel->deleteMission($id, $_SESSION['tenant_id'])) {
             header('Location: ' . URLROOT . '/supervisor/missions');
             exit;
@@ -662,6 +691,7 @@ class Supervisor extends Controller {
 
     // --- EXPENSES ---
     public function expenses() {
+        $this->featureDisabled(); // Module Dépenses désactivé à la demande
         $raw_expenses = $this->expenseModel->getExpensesByTenant($_SESSION['tenant_id']);
         
         $expenses_by_status = [
@@ -701,6 +731,7 @@ class Supervisor extends Controller {
     }
 
     public function processExpense($id) {
+        $this->featureDisabled(); // Module Dépenses désactivé à la demande
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: ' . URLROOT . '/supervisor/expenses');
             exit;
@@ -759,16 +790,19 @@ class Supervisor extends Controller {
     }
 
     public function validateExpense($id) {
+        $this->featureDisabled(); // Module Dépenses désactivé à la demande
         header('Location: ' . URLROOT . '/supervisor/expenses');
         exit;
     }
 
     public function rejectExpense($id) {
+        $this->featureDisabled(); // Module Dépenses désactivé à la demande
         header('Location: ' . URLROOT . '/supervisor/expenses');
         exit;
     }
 
     public function getExpenseDetail($id) {
+        $this->featureDisabled(); // Module Dépenses désactivé à la demande
         $expense = $this->expenseModel->getExpenseById($id);
         // Ne divulgue le détail que pour une dépense du tenant courant (IDOR).
         if (!$expense || $expense->tenant_id != $_SESSION['tenant_id']) {
@@ -851,10 +885,25 @@ class Supervisor extends Controller {
         }
     }
 
+    /**
+     * Récupère un ordre de mission en garantissant qu'il appartient au tenant
+     * courant. Interrompt en 403 sinon (empêche l'accès/altération inter-tenant
+     * par simple itération d'id).
+     */
+    private function ownedMissionOrderOrDeny($id) {
+        $order = $this->missionOrderModel->getOrderById($id);
+        if (!$order || $order->tenant_id != $_SESSION['tenant_id']) {
+            http_response_code(403);
+            die("Accès non autorisé.");
+        }
+        return $order;
+    }
+
     public function validateMissionOrder($id) {
         if ($_SESSION['user_role'] !== 'manager') {
             die("Accès refusé");
         }
+        $this->ownedMissionOrderOrDeny($id);
 
         if ($this->missionOrderModel->validate($id, $_SESSION['user_id'])) {
             $order = $this->missionOrderModel->getOrderById($id);
@@ -868,8 +917,7 @@ class Supervisor extends Controller {
     }
 
     public function editMissionOrder($id) {
-        $order = $this->missionOrderModel->getOrderById($id);
-        if (!$order) die("Ordre introuvable");
+        $order = $this->ownedMissionOrderOrDeny($id);
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $data = [
@@ -919,6 +967,7 @@ class Supervisor extends Controller {
         if ($_SESSION['user_role'] !== 'manager') {
             die("Accès refusé");
         }
+        $this->ownedMissionOrderOrDeny($id);
 
         if ($this->missionOrderModel->reject($id, $_SESSION['user_id'])) {
             $order = $this->missionOrderModel->getOrderById($id);
@@ -932,8 +981,7 @@ class Supervisor extends Controller {
     }
 
     public function printMissionOrder($id) {
-        $order = $this->missionOrderModel->getOrderById($id);
-        if (!$order) die("Ordre introuvable");
+        $order = $this->ownedMissionOrderOrDeny($id);
         if ($order->status !== 'Validé' && $_SESSION['user_role'] !== 'manager' && $_SESSION['user_role'] !== 'superviseur') {
             die("Accès refusé - L'ordre doit être validé pour l'impression");
         }
@@ -955,8 +1003,7 @@ class Supervisor extends Controller {
     }
 
     public function downloadMissionOrder($id) {
-        $order = $this->missionOrderModel->getOrderById($id);
-        if (!$order) die("Ordre introuvable");
+        $order = $this->ownedMissionOrderOrDeny($id);
         if ($order->status !== 'Validé' && $_SESSION['user_role'] !== 'manager' && $_SESSION['user_role'] !== 'superviseur') {
             die("Accès refusé - L'ordre doit être validé pour le téléchargement");
         }

@@ -27,13 +27,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // Autorisation : la gestion des contrats/affectations (et la synchro du rôle
+    // système) est réservée à l'encadrement du tenant : admin de tenant (sans
+    // employee_id) ou rôle admin/manager/superviseur. Employé simple et
+    // super-admin (sans tenant) refusés.
+    $isPrivileged = empty($_SESSION['employee_id'])
+        || in_array($_SESSION['user_role'] ?? '', ['admin', 'manager', 'superviseur'], true);
+    if (!empty($_SESSION['is_super_admin']) || !$isPrivileged) {
+        echo json_encode(['success' => false, 'message' => 'Accès refusé.']);
+        exit;
+    }
+
     try {
         require_once '../../config/database.php';
         require_once '../../src/functions.php';
         csrf_check_or_die(); // Protection CSRF (functions.php chargé juste au-dessus)
 
+        // tenant_id TOUJOURS pris en session (jamais du client) : empêche
+        // d'agir sur un autre tenant en falsifiant le champ POST.
         $employee_id = $_POST['employee_id'] ?? null;
-        $tenant_id = $_POST['tenant_id'] ?? null;
+        $tenant_id = $_SESSION['tenant_id'] ?? null;
         $contract_id = $_POST['contract_id'] ?? null;
 
         if (isset($_POST['save_contract'])) {
