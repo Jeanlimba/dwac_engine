@@ -10,7 +10,9 @@
             <div class="col-auto ms-auto d-print-none">
                 <a href="<?= URLROOT ?>/supervisor/missions" class="btn btn-white">Retour</a>
                 <a href="<?= URLROOT ?>/supervisor/editMission/<?= $data['mission']->id ?>" class="btn btn-primary">Modifier</a>
-                <a href="<?= URLROOT ?>/supervisor/deleteMission/<?= $data['mission']->id ?>" class="btn btn-danger" onclick="return confirm('Supprimer cette mission ?')">Supprimer</a>
+                <form method="POST" action="<?= URLROOT ?>/supervisor/deleteMission/<?= $data['mission']->id ?>" class="d-inline" onsubmit="return confirm('Supprimer cette mission ?')">
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
             </div>
         </div>
     </div>
@@ -646,9 +648,9 @@
                                             <div class="font-weight-medium"><?= htmlspecialchars($tpl->name) ?></div>
                                             <div class="text-muted small">Créé le <?= date('d/m/Y', strtotime($tpl->created_at)) ?></div>
                                         </div>
-                                        <a href="<?= URLROOT ?>/supervisor/deleteBudgetTemplate/<?= $tpl->id ?>/<?= $data['mission']->id ?>" class="btn btn-icon btn-sm btn-ghost-danger ms-2" title="Supprimer le modèle" onclick="return confirm('Supprimer ce modèle ?')">
+                                        <button type="button" class="btn btn-icon btn-sm btn-ghost-danger ms-2" title="Supprimer le modèle" onclick="event.preventDefault(); event.stopPropagation(); confirmDeleteTemplate('<?= URLROOT ?>/supervisor/deleteBudgetTemplate/<?= $tpl->id ?>/<?= $data['mission']->id ?>');">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="4" y1="7" x2="20" y2="7" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
-                                        </a>
+                                        </button>
                                     </label>
                                 <?php endforeach; ?>
                             </div>
@@ -705,7 +707,7 @@ async function deleteBudgetAction(url) {
 
     try {
         const response = await fetch(url, {
-            method: 'GET',
+            method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
@@ -720,6 +722,17 @@ async function deleteBudgetAction(url) {
         }
     } catch (error) {
         console.error('Error:', error);
+        showToast('Erreur réseau.', 'danger');
+    }
+}
+
+// Suppression d'un modèle de budget (POST + token CSRF auto-injecté), puis rechargement.
+async function confirmDeleteTemplate(url) {
+    if (!confirm('Supprimer ce modèle ?')) return;
+    try {
+        await fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        window.location.reload();
+    } catch (e) {
         showToast('Erreur réseau.', 'danger');
     }
 }
